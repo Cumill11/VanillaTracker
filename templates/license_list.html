@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Licencje{% endblock %}
+{% block page_title %}Licencje{% endblock %}
+
+{% block top_actions %}
+<a href="{{ url_for('license-create') }}" class="btn btn-filled btn-sm">
+  <span class="material-icons-round">add</span> Dodaj licencję
+</a>
+{% endblock %}
+
+{% block content %}
+<form method="get" action="{{ url_for('license-list') }}">
+  <div class="filters-bar">
+    <div class="search-field">
+      <span class="material-icons-round">search</span>
+      <input type="text" name="q" value="{{ current_q }}" placeholder="Szukaj..." oninput="this.form.submit()">
+    </div>
+    <select name="status" class="md3-select" style="width:auto" onchange="this.form.submit()">
+      <option value="">Wszystkie statusy</option>
+      {% for val, label in status_choices %}
+      <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+
+<div class="card">
+  <div class="desktop-table">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Tag</th>
+          <th>Nazwa</th>
+          <th class="col-hide-sm">Dostawca</th>
+          <th>Status</th>
+          <th class="col-hide-sm">Stanowiska</th>
+          <th class="col-hide-sm">Wygasa</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lic in licenses %}
+        <tr>
+          <td><a href="/licenses/{{ lic.id }}/" class="asset-tag" style="background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)">{{ lic.asset_tag }}</a></td>
+          <td><a href="/licenses/{{ lic.id }}/" style="color:var(--md-on-surface)">{{ lic.name }}</a></td>
+          <td class="col-hide-sm">{{ lic.vendor or '—' }}</td>
+          <td>{{ lic.status|status_chip }}</td>
+          <td class="col-hide-sm">
+            {% set used = lic.seats_used %}
+            {% set pct = (used / lic.seats * 100)|int if lic.seats else 0 %}
+            {{ used }}/{{ lic.seats }}
+            <div class="seats-bar" style="width:80px">
+              <div class="seats-bar-fill {% if pct >= 100 %}full{% elif pct >= 80 %}warn{% endif %}" style="width:{{ [pct,100]|min }}%"></div>
+            </div>
+          </td>
+          <td class="col-hide-sm">{{ lic.expiry_date|date_fmt if lic.expiry_date else '—' }}</td>
+          <td>
+            <a href="/licenses/{{ lic.id }}/edit/" class="btn-icon" title="Edytuj">
+              <span class="material-icons-round">edit</span>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">
+          <div class="empty-state">
+            <span class="material-icons-round">key</span>
+            <h3>Brak licencji</h3>
+            <p><a href="{{ url_for('license-create') }}">Dodaj pierwszą licencję</a></p>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mobile-card-list">
+    {% for lic in licenses %}
+    <a href="/licenses/{{ lic.id }}/" class="mob-list-item">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <span class="asset-tag" style="background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)">{{ lic.asset_tag }}</span>
+        {{ lic.status|status_chip }}
+      </div>
+      <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">{{ lic.name }}</div>
+      <div class="text-sm text-muted">{{ lic.vendor or '' }} · {{ lic.seats_used }}/{{ lic.seats }} stanowisk</div>
+    </a>
+    {% else %}
+    <div class="empty-state">
+      <span class="material-icons-round">key</span>
+      <h3>Brak licencji</h3>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if pagination.num_pages > 1 %}
+  <div class="pagination">
+    {% if pagination.has_prev %}
+    <a href="?q={{ current_q }}&status={{ current_status }}&page={{ pagination.page - 1 }}" class="page-btn"><span class="material-icons-round">chevron_left</span></a>
+    {% endif %}
+    {% for p in range(1, pagination.num_pages + 1) %}
+    <a href="?q={{ current_q }}&status={{ current_status }}&page={{ p }}" class="page-btn {% if p == pagination.page %}current{% endif %}">{{ p }}</a>
+    {% endfor %}
+    {% if pagination.has_next %}
+    <a href="?q={{ current_q }}&status={{ current_status }}&page={{ pagination.page + 1 }}" class="page-btn"><span class="material-icons-round">chevron_right</span></a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

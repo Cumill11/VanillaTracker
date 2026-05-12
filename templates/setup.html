@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Konfiguracja — VanillaTracker</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='img/logo.svg') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <style>
+    :root {
+      --md-primary: #D0BCFF; --md-on-primary: #381E72;
+      --md-primary-container: #4F378B; --md-on-primary-container: #EADDFF;
+      --md-background: #141218; --md-on-background: #E6E0E9;
+      --md-surface-container: #211F26; --md-surface-container-high: #2B2930;
+      --md-outline: #938F99; --md-outline-variant: #49454F;
+      --md-on-surface: #E6E0E9; --md-on-surface-variant: #CAC4D0;
+      --md-error: #F2B8B5;
+      --radius-sm: 8px; --radius-md: 12px; --radius-xl: 28px; --radius-full: 50px;
+      --elev-3: 0 4px 8px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.3);
+      font-family: 'Lato', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--md-background); color: var(--md-on-background); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .setup-card { background: var(--md-surface-container); border-radius: var(--radius-xl); padding: 40px 32px; width: 100%; max-width: 480px; box-shadow: var(--elev-3); }
+    .setup-logo { width: 56px; height: 56px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; overflow: hidden; }
+    .setup-logo img { width: 100%; height: 100%; object-fit: contain; }
+    h1 { font-size: 24px; font-weight: 400; color: var(--md-on-surface); text-align: center; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: var(--md-on-surface-variant); text-align: center; margin-bottom: 8px; }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--md-primary); text-transform: uppercase; margin: 24px 0 16px; border-bottom: 1px solid var(--md-outline-variant); padding-bottom: 8px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .form-group label { font-size: 12px; font-weight: 500; letter-spacing: .5px; color: var(--md-on-surface-variant); text-transform: uppercase; }
+    .md3-input { background: var(--md-surface-container-high); border: 1px solid var(--md-outline); border-radius: var(--radius-sm); color: var(--md-on-surface); padding: 14px 16px; font-size: 15px; font-family: inherit; width: 100%; transition: border-color .2s; outline: none; }
+    .md3-input:focus { border-color: var(--md-primary); box-shadow: 0 0 0 2px rgba(208,188,255,.2); }
+    .md3-input.is-error { border-color: var(--md-error); }
+    .field-error { font-size: 12px; color: var(--md-error); margin-top: 2px; }
+    .btn-filled { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 24px; border-radius: var(--radius-full); font-size: 15px; font-weight: 500; border: none; cursor: pointer; background: var(--md-primary); color: var(--md-on-primary); width: 100%; transition: opacity .2s; margin-top: 8px; }
+    .btn-filled:hover { opacity: .9; }
+    .info-box { background: rgba(208,188,255,.08); border: 1px solid rgba(208,188,255,.2); border-radius: var(--radius-sm); padding: 12px 16px; color: var(--md-on-surface-variant); font-size: 13px; margin-bottom: 4px; display: flex; gap: 10px; align-items: flex-start; }
+    .info-box .material-icons-round { font-size: 18px; color: var(--md-primary); flex-shrink: 0; margin-top: 1px; }
+  </style>
+</head>
+<body>
+<div class="setup-card">
+  <div class="setup-logo">
+    <img src="{{ url_for('static', path='img/logo.svg') }}" alt="VanillaTracker">
+  </div>
+  <h1>Witaj w VanillaTracker</h1>
+  <p class="subtitle">Pierwsze uruchomienie — utwórz konto administratora</p>
+
+  <div class="info-box">
+    <span class="material-icons-round">info</span>
+    <span>To konto będzie miało pełny dostęp do systemu. Po zalogowaniu możesz dodawać kolejnych użytkowników.</span>
+  </div>
+
+  <form method="post" action="{{ url_for('setup-post') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="section-label">Konfiguracja tagów</div>
+
+    <div class="form-group">
+      <label>Prefiks tagów *</label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="text" name="tag_prefix" id="tag_prefix"
+               class="md3-input {% if errors.tag_prefix %}is-error{% endif %}"
+               value="{{ tag_prefix or '' }}" maxlength="4"
+               placeholder="np. IT"
+               style="width:100px;text-transform:uppercase"
+               oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'');document.getElementById('tag-preview').textContent=this.value?this.value+'-00001':'??-00001'">
+        <span style="color:var(--md-on-surface-variant);font-size:14px">
+          Podgląd: <strong id="tag-preview" style="color:var(--md-primary);font-family:monospace">{{ (tag_prefix or '') + '-00001' if tag_prefix else '??-00001' }}</strong>
+        </span>
+      </div>
+      {% if errors.tag_prefix %}<span class="field-error">{{ errors.tag_prefix }}</span>{% endif %}
+      <span style="font-size:12px;color:var(--md-on-surface-variant)">2–4 wielkie litery, np. IT, BS, VT — będą poprzedzać każdy numer inwentarzowy</span>
+    </div>
+
+    <div class="section-label">Dane logowania</div>
+
+    <div class="form-group">
+      <label>Login *</label>
+      <input type="text" name="username" class="md3-input {% if errors.username %}is-error{% endif %}"
+             value="{{ username or '' }}" autocomplete="username" autofocus>
+      {% if errors.username %}<span class="field-error">{{ errors.username }}</span>{% endif %}
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Hasło *</label>
+        <input type="password" name="password" class="md3-input {% if errors.password %}is-error{% endif %}"
+               autocomplete="new-password">
+        {% if errors.password %}<span class="field-error">{{ errors.password }}</span>{% endif %}
+      </div>
+      <div class="form-group">
+        <label>Powtórz hasło *</label>
+        <input type="password" name="password2" class="md3-input {% if errors.password2 %}is-error{% endif %}"
+               autocomplete="new-password">
+        {% if errors.password2 %}<span class="field-error">{{ errors.password2 }}</span>{% endif %}
+      </div>
+    </div>
+
+    <div class="section-label">Dane osobowe (opcjonalne)</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Imię</label>
+        <input type="text" name="first_name" class="md3-input" value="{{ first_name or '' }}" autocomplete="given-name">
+      </div>
+      <div class="form-group">
+        <label>Nazwisko</label>
+        <input type="text" name="last_name" class="md3-input" value="{{ last_name or '' }}" autocomplete="family-name">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" name="email" class="md3-input" value="{{ email or '' }}" autocomplete="email">
+    </div>
+
+    <button type="submit" class="btn-filled">
+      <span class="material-icons-round">check_circle</span> Utwórz administratora
+    </button>
+  </form>
+</div>
+</body>
+</html>

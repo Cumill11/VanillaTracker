@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile_user.get_full_name() }}{% endblock %}
+{% block page_title %}{{ profile_user.get_full_name() }}{% endblock %}
+
+{% block top_actions %}
+<a href="/users/{{ profile_user.id }}/edit/" class="btn btn-tonal btn-sm">
+  <span class="material-icons-round">edit</span> Edytuj
+</a>
+<a href="/users/{{ profile_user.id }}/password/" class="btn btn-tonal btn-sm">
+  <span class="material-icons-round">lock_reset</span> Zmień hasło
+</a>
+{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{{ url_for('user-list') }}">Użytkownicy</a>
+  <span class="sep material-icons-round">chevron_right</span>
+  <span class="current">{{ profile_user.get_full_name() }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+  <div style="display:flex;flex-direction:column;gap:20px">
+
+    <!-- Assigned assets -->
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">devices</span>
+        <h2>Przypisany sprzęt</h2>
+        <span class="asset-tag" style="font-size:12px">{{ assigned_assets|length }}</span>
+      </div>
+      {% if assigned_assets %}
+      <div class="card-body" style="padding:0">
+        {% for a in assigned_assets %}
+        <a href="/assets/{{ a.id }}/" style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--md-outline-variant);text-decoration:none;color:var(--md-on-surface)">
+          <span class="material-icons-round" style="font-size:18px;color:var(--md-primary)">{{ a.category.slug|category_icon if a.category else 'devices_other' }}</span>
+          <span class="asset-tag">{{ a.asset_tag }}</span>
+          <span style="flex:1;font-size:14px">{{ a.name }}</span>
+          <span class="text-sm text-muted">{{ a.category.name if a.category else '' }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:30px">
+        <span class="material-icons-round" style="font-size:36px">devices</span>
+        <p>Brak przypisanego sprzętu</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Licenses -->
+    {% if licenses %}
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">key</span>
+        <h2>Licencje</h2>
+      </div>
+      <div class="card-body" style="padding:0">
+        {% for l in licenses %}
+        <a href="/licenses/{{ l.id }}/" style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--md-outline-variant);text-decoration:none;color:var(--md-on-surface)">
+          <span class="asset-tag" style="background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)">{{ l.asset_tag }}</span>
+          <span style="flex:1;font-size:14px">{{ l.name }}</span>
+          {{ l.status|status_chip }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- History -->
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">history</span>
+        <h2>Historia</h2>
+      </div>
+      <div class="card-body">
+        <div class="timeline">
+          {% for h in history %}
+          <div class="timeline-item">
+            <div class="timeline-dot">
+              {% if h.action == 'assign' %}<span class="material-icons-round">person_add</span>
+              {% elif h.action == 'return' %}<span class="material-icons-round">undo</span>
+              {% else %}<span class="material-icons-round">edit_note</span>{% endif %}
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-title">{{ h.get_action_display() }}
+                {% if h.asset %}<a href="/assets/{{ h.asset.id }}/">{{ h.asset.asset_tag }}</a>{% endif %}
+              </div>
+              <div class="timeline-meta">{{ h.created_at|date_fmt('%d.%m.%Y %H:%M') }}
+                {% if h.performed_by %} · przez {{ h.performed_by.get_full_name() }}{% endif %}
+              </div>
+              {% if h.note %}<div class="text-sm text-muted" style="margin-top:2px">{{ h.note }}</div>{% endif %}
+            </div>
+          </div>
+          {% else %}
+          <div class="empty-state" style="padding:20px">
+            <span class="material-icons-round" style="font-size:32px">history</span>
+            <p>Brak historii</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: profile -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">badge</span>
+        <h2>Profil</h2>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--md-outline-variant)">
+          <div class="avatar avatar-lg">{{ profile_user.get_initials() }}</div>
+          <div style="text-align:center">
+            <div style="font-size:18px;font-weight:500;color:var(--md-on-surface)">{{ profile_user.get_full_name() }}</div>
+            {% if profile_user.profile and profile_user.profile.position %}
+            <div class="text-sm text-muted">{{ profile_user.profile.position }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="detail-field">
+          <span class="field-label">Login</span>
+          <span class="field-value font-mono text-sm">{{ profile_user.username }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="field-label">Email</span>
+          <span class="field-value">{{ profile_user.email or '—' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="field-label">Dział</span>
+          <span class="field-value">{{ profile_user.profile.department.name if profile_user.profile and profile_user.profile.department else '—' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="field-label">Telefon</span>
+          <span class="field-value">{{ profile_user.profile.phone if profile_user.profile and profile_user.profile.phone else '—' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="field-label">Status</span>
+          <span class="field-value">
+            {% if profile_user.is_active %}
+            <span class="status-chip" style="background:#4CAF5020;color:#4CAF50;border:1px solid #4CAF5040">Aktywny</span>
+            {% else %}
+            <span class="status-chip" style="background:#9E9E9E20;color:#9E9E9E;border:1px solid #9E9E9E40">Nieaktywny</span>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

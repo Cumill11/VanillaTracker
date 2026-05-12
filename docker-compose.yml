@@ -1,0 +1,7 @@
+services:
+  web:
+    image: ghcr.io/cumill11/vanilla-tracker:latest
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"

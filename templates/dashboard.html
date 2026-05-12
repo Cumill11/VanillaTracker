@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block top_actions %}
+<a href="{{ url_for('asset-create') }}" class="btn btn-filled btn-sm">
+  <span class="material-icons-round">add</span> Dodaj sprzęt
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Stat cards -->
+<div class="stat-grid">
+  <a href="{{ url_for('asset-list') }}" class="stat-card" style="text-decoration:none">
+    <div class="stat-icon" style="background:rgba(208,188,255,.15)"><span class="material-icons-round" style="color:var(--md-primary)">devices</span></div>
+    <div class="stat-number">{{ total_assets }}</div>
+    <div class="stat-label">Wszystkie</div>
+  </a>
+  <a href="{{ url_for('asset-list') }}?status=assigned" class="stat-card" style="text-decoration:none">
+    <div class="stat-icon" style="background:rgba(33,150,243,.15)"><span class="material-icons-round" style="color:#2196F3">person</span></div>
+    <div class="stat-number">{{ assigned_assets }}</div>
+    <div class="stat-label">Przypisane</div>
+  </a>
+  <a href="{{ url_for('asset-list') }}?status=available" class="stat-card" style="text-decoration:none">
+    <div class="stat-icon" style="background:rgba(76,175,80,.15)"><span class="material-icons-round" style="color:#4CAF50">check_circle</span></div>
+    <div class="stat-number">{{ available_assets }}</div>
+    <div class="stat-label">Dostępne</div>
+  </a>
+  <a href="{{ url_for('asset-list') }}?status=maintenance" class="stat-card" style="text-decoration:none">
+    <div class="stat-icon" style="background:rgba(255,152,0,.15)"><span class="material-icons-round" style="color:#FF9800">build</span></div>
+    <div class="stat-number">{{ maintenance_assets }}</div>
+    <div class="stat-label">Serwis</div>
+  </a>
+  <a href="{{ url_for('user-list') }}" class="stat-card" style="text-decoration:none">
+    <div class="stat-icon" style="background:rgba(204,194,220,.15)"><span class="material-icons-round" style="color:var(--md-secondary)">group</span></div>
+    <div class="stat-number">{{ total_users }}</div>
+    <div class="stat-label">Użytkownicy</div>
+  </a>
+  <a href="{{ url_for('license-list') }}" class="stat-card" style="text-decoration:none">
+    <div class="stat-icon" style="background:rgba(239,184,200,.15)"><span class="material-icons-round" style="color:var(--md-tertiary)">key</span></div>
+    <div class="stat-number">{{ active_licenses }}/{{ total_licenses }}</div>
+    <div class="stat-label">Licencje aktywne</div>
+  </a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="dashboard-2col">
+  <!-- Categories -->
+  <div class="card">
+    <div class="card-header">
+      <span class="material-icons-round" style="color:var(--md-primary)">category</span>
+      <h2>Sprzęt według kategorii</h2>
+    </div>
+    <div class="card-body" style="padding:0">
+      {% for cat in categories %}
+      <a href="{{ url_for('asset-list') }}?category={{ cat.id }}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--md-outline-variant);text-decoration:none;color:var(--md-on-surface)">
+        <span class="material-icons-round" style="font-size:18px;color:var(--md-primary)">{{ cat.slug|category_icon }}</span>
+        <span style="flex:1;font-size:14px">{{ cat.name }}</span>
+        <span class="asset-tag" style="font-size:12px">{{ cat.asset_count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recent history -->
+  <div class="card">
+    <div class="card-header">
+      <span class="material-icons-round" style="color:var(--md-primary)">history</span>
+      <h2>Ostatnie zdarzenia</h2>
+    </div>
+    <div class="card-body">
+      <div class="timeline">
+        {% for h in recent_history %}
+        <div class="timeline-item">
+          <div class="timeline-dot">
+            {% if h.action == 'assign' %}<span class="material-icons-round">person_add</span>
+            {% elif h.action == 'return' %}<span class="material-icons-round">undo</span>
+            {% elif h.action == 'maintenance' %}<span class="material-icons-round">build</span>
+            {% else %}<span class="material-icons-round">edit_note</span>{% endif %}
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-title">
+              {{ h.get_action_display() }}
+              {% if h.asset %}<a href="/assets/{{ h.asset.id }}/">{{ h.asset.asset_tag }}</a>{% endif %}
+              {% if h.license %}<a href="/licenses/{{ h.license.id }}/">{{ h.license.asset_tag }}</a>{% endif %}
+            </div>
+            <div class="timeline-meta">{{ h.created_at|date_fmt('%d.%m.%Y %H:%M') }}</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:20px">
+          <span class="material-icons-round" style="font-size:32px">history</span>
+          <p>Brak historii</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Expiring warranties -->
+  {% if expiring_warranties %}
+  <div class="card">
+    <div class="card-header">
+      <span class="material-icons-round" style="color:var(--md-warning)">warning</span>
+      <h2>Kończące się gwarancje (60 dni)</h2>
+    </div>
+    <div class="card-body" style="padding:0">
+      {% for a in expiring_warranties %}
+      <a href="/assets/{{ a.id }}/" style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--md-outline-variant);text-decoration:none;color:var(--md-on-surface)">
+        <span class="asset-tag">{{ a.asset_tag }}</span>
+        <span style="flex:1;font-size:14px">{{ a.name }}</span>
+        <span class="text-sm text-muted">{{ a.warranty_expiry|date_fmt }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Expiring licenses -->
+  {% if expiring_licenses %}
+  <div class="card">
+    <div class="card-header">
+      <span class="material-icons-round" style="color:var(--md-warning)">schedule</span>
+      <h2>Kończące się licencje</h2>
+    </div>
+    <div class="card-body" style="padding:0">
+      {% for l in expiring_licenses %}
+      <a href="/licenses/{{ l.id }}/" style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--md-outline-variant);text-decoration:none;color:var(--md-on-surface)">
+        <span class="asset-tag" style="background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)">{{ l.asset_tag }}</span>
+        <span style="flex:1;font-size:14px">{{ l.name }}</span>
+        <span class="text-sm text-muted">{{ l.expiry_date|date_fmt }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Typy{% endblock %}
+{% block page_title %}Typy{% endblock %}
+
+{% block content %}
+<div class="types-grid">
+
+  <!-- Kategorie sprzętu -->
+  <div class="card">
+    <div class="card-header">
+      <span class="material-icons-round" style="color:var(--md-primary)">category</span>
+      <h2>Kategorie sprzętu</h2>
+    </div>
+    {% if categories %}
+    <div class="card-body" style="padding:0">
+      {% for cat in categories %}
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--md-outline-variant)">
+        <div style="width:40px;height:40px;flex-shrink:0;border-radius:var(--radius-sm);background:var(--md-primary-container);display:flex;align-items:center;justify-content:center">
+          <span class="material-icons-round" style="font-size:20px;color:var(--md-on-primary-container)">{{ cat.slug|category_icon }}</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:500;color:var(--md-on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ cat.name }}</div>
+          <div class="text-xs text-muted font-mono">{{ cat.slug }}</div>
+        </div>
+        <a href="{{ url_for('asset-list') }}?category={{ cat.id }}" class="asset-tag" style="font-size:12px;flex-shrink:0">{{ cat.asset_count }}</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:40px 24px">
+      <span class="material-icons-round">category</span>
+      <h3>Brak kategorii</h3>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Działy -->
+  <div class="card">
+    <div class="card-header">
+      <span class="material-icons-round" style="color:var(--md-secondary)">apartment</span>
+      <h2>Działy</h2>
+      <a href="{{ url_for('department-create') }}" class="btn-icon" title="Dodaj dział">
+        <span class="material-icons-round" style="color:var(--md-secondary)">add</span>
+      </a>
+    </div>
+    {% if departments %}
+    <div class="card-body" style="padding:0">
+      {% for dept in departments %}
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--md-outline-variant)">
+        <div style="width:40px;height:40px;flex-shrink:0;border-radius:var(--radius-sm);background:var(--md-secondary-container);display:flex;align-items:center;justify-content:center">
+          <span class="material-icons-round" style="font-size:20px;color:var(--md-on-secondary-container)">business</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">{{ dept.name }}</div>
+        </div>
+        <a href="{{ url_for('user-list') }}?department={{ dept.id }}" class="asset-tag" style="font-size:12px;flex-shrink:0;background:var(--md-secondary-container);color:var(--md-on-secondary-container)">{{ dept.user_count }}</a>
+        <a href="/departments/{{ dept.id }}/edit/" class="btn-icon" title="Edytuj">
+          <span class="material-icons-round" style="font-size:18px">edit</span>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:40px 24px">
+      <span class="material-icons-round">apartment</span>
+      <h3>Brak działów</h3>
+      <p><a href="{{ url_for('department-create') }}">Dodaj dział</a></p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

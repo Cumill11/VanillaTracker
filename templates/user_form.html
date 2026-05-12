@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{{ url_for('user-list') }}">Użytkownicy</a>
+  <span class="sep material-icons-round">chevron_right</span>
+  {% if edit_user %}
+  <a href="/users/{{ edit_user.id }}/">{{ edit_user.get_full_name() }}</a>
+  <span class="sep material-icons-round">chevron_right</span>
+  {% endif %}
+  <span class="current">{{ title }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:700px">
+  <form method="post" action="{% if edit_user %}/users/{{ edit_user.id }}/edit/{% else %}{{ url_for('user-create-post') }}{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="card mb-20">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">person</span>
+        <h2>Dane użytkownika</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label>Imię<span class="req">*</span></label>
+            <input type="text" name="first_name" class="md3-input" value="{{ form_data.first_name or '' }}">
+            {% if errors.first_name %}<ul class="errorlist">{% for e in errors.first_name %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label>Nazwisko<span class="req">*</span></label>
+            <input type="text" name="last_name" class="md3-input" value="{{ form_data.last_name or '' }}">
+            {% if errors.last_name %}<ul class="errorlist">{% for e in errors.last_name %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" class="md3-input" value="{{ form_data.email or '' }}">
+          </div>
+
+          <div class="form-group">
+            <label>Dział</label>
+            <select name="department_id" class="md3-select">
+              <option value="">— brak —</option>
+              {% for dept in departments %}
+              <option value="{{ dept.id }}" {% if form_data.department_id == dept.id|string %}selected{% endif %}>{{ dept.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Stanowisko</label>
+            <input type="text" name="position" class="md3-input" value="{{ form_data.position or '' }}">
+          </div>
+
+          <div class="form-group">
+            <label>Telefon</label>
+            <input type="text" name="phone" class="md3-input" value="{{ form_data.phone or '' }}">
+          </div>
+
+          {% if edit_user %}
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:14px">
+              <input type="checkbox" name="is_active" value="1" {% if form_data.is_active %}checked{% endif %} style="width:18px;height:18px;accent-color:var(--md-primary)">
+              Konto aktywne
+            </label>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:14px">
+              <input type="checkbox" name="is_active_employee" value="1" {% if form_data.is_active_employee %}checked{% endif %} style="width:18px;height:18px;accent-color:var(--md-primary)">
+              Aktywny pracownik
+            </label>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if not edit_user %}
+    <div class="card mb-20">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">lock</span>
+        <h2>Dostęp do systemu</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-group mb-20">
+          <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:14px">
+            <input type="checkbox" name="can_login" value="1" id="can-login-cb" {% if form_data.can_login %}checked{% endif %} style="width:18px;height:18px;accent-color:var(--md-primary)">
+            Może się logować do systemu
+          </label>
+        </div>
+        <div id="login-fields" style="display:none">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Login</label>
+              <input type="text" name="username" class="md3-input" value="{{ form_data.username or '' }}" autocomplete="off">
+              {% if errors.username %}<ul class="errorlist">{% for e in errors.username %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group"></div>
+            <div class="form-group">
+              <label>Hasło</label>
+              <input type="password" name="password1" class="md3-input" autocomplete="new-password">
+              {% if errors.password1 %}<ul class="errorlist">{% for e in errors.password1 %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+              <label>Powtórz hasło</label>
+              <input type="password" name="password2" class="md3-input" autocomplete="new-password">
+              {% if errors.password2 %}<ul class="errorlist">{% for e in errors.password2 %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="flex gap-12">
+      <button type="submit" class="btn btn-filled">
+        <span class="material-icons-round">save</span> Zapisz
+      </button>
+      <a href="{% if edit_user %}/users/{{ edit_user.id }}/{% else %}{{ url_for('user-list') }}{% endif %}" class="btn btn-outlined">
+        Anuluj
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if not edit_user %}
+<script>
+  const cb = document.getElementById('can-login-cb');
+  const fields = document.getElementById('login-fields');
+  function toggle() { fields.style.display = cb.checked ? '' : 'none'; }
+  cb.addEventListener('change', toggle);
+  toggle();
+</script>
+{% endif %}
+{% endblock %}

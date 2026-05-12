@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{{ url_for('category-list') }}">Typy</a>
+  <span class="sep material-icons-round">chevron_right</span>
+  <span class="current">{{ title }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:500px">
+  <form method="post" action="{% if object %}/departments/{{ object.id }}/edit/{% else %}{{ url_for('department-create-post') }}{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="card mb-20">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-secondary)">apartment</span>
+        <h2>Dane działu</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Nazwa<span class="req">*</span></label>
+          <input type="text" name="name" class="md3-input" value="{{ form_data.name or '' }}" autofocus>
+          {% if errors.name %}<ul class="errorlist">{% for e in errors.name %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-12">
+      <button type="submit" class="btn btn-filled">
+        <span class="material-icons-round">save</span> Zapisz
+      </button>
+      <a href="{{ url_for('category-list') }}" class="btn btn-outlined">Anuluj</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
