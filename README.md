@@ -133,3 +133,135 @@ tests/               # Testy pytest (69 testów)
 - `same_site=strict` na ciasteczku sesji
 - `https_only` konfigurowalny przez `HTTPS_ONLY=true`
 - Autoescape włączony w szablonach Jinja2
+
+---
+
+# VanillaTracker (English)
+
+IT asset management system built with FastAPI. Manage hardware, licenses and users across departments.
+
+## Features
+
+- First-run setup wizard — creates an admin account and configures the asset tag prefix
+- Asset tracking with customisable tag numbers (e.g. IT-00001) and QR code PDF labels
+- Category-specific fields: CPU/RAM/storage (laptop, desktop), phone number (phone/tablet), ink (printer)
+- Asset assignment and return with full operation history
+- License management (seats, expiry dates, user assignments)
+- User management with department grouping
+- Pagination, filtering and search on all list views
+- Session flash messages and CSRF protection
+- Material Design 3 interface (dark mode)
+
+## Requirements
+
+- Python 3.12+
+- Docker + Docker Compose (optional)
+
+## Running locally
+
+```bash
+cd vanillatracker
+
+python -m venv venv
+source venv/bin/activate
+
+pip install -r requirements.txt
+
+cp .env.example .env
+# Set SECRET_KEY in .env
+
+uvicorn app.main:app --reload
+```
+
+Open `http://localhost:8000`. On first run the setup wizard at `/setup/` will guide you through creating an admin account and choosing a tag prefix. The database and tables are created automatically on startup.
+
+## Running with Docker
+
+```bash
+cp .env.example .env
+# Fill in SECRET_KEY and database credentials
+
+docker compose up -d
+```
+
+The image is pulled from `ghcr.io/cumill11/vanilla-tracker:latest`. The setup wizard is available at `http://localhost:8000/setup/` on first run.
+
+## Configuration (.env)
+
+| Variable | Description | Default |
+|---|---|---|
+| `SECRET_KEY` | Session secret key — change before deploying | *(none)* |
+| `DATABASE_URL` | Full database URL | `sqlite:///./db.sqlite3` |
+| `DB_HOST` | MySQL/MariaDB host | *(none)* |
+| `DB_PORT` | MySQL/MariaDB port | `3306` |
+| `DB_NAME` | Database name | `vanillatracker` |
+| `DB_USER` | Database user | `root` |
+| `DB_PASSWORD` | Database password | *(none)* |
+| `HTTPS_ONLY` | Enforce HTTPS for the session cookie | `false` |
+
+If `DATABASE_URL` is set, all `DB_*` variables are ignored. If neither is set, SQLite is used.
+
+### MySQL example
+
+```env
+SECRET_KEY=random-key-min-32-chars
+DATABASE_URL=mysql+pymysql://user:password@localhost:3306/vanillatracker
+```
+
+### SQLite example (dev)
+
+```env
+SECRET_KEY=random-key-min-32-chars
+# DATABASE_URL not needed — SQLite is used by default
+```
+
+## Tests
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Single file
+python -m pytest tests/test_assets.py
+
+# Stop on first failure
+python -m pytest tests/ -x
+```
+
+Tests use a separate SQLite database (`test_vanillatracker.db`) that is created and deleted automatically. No running application or external database is required.
+
+## Project structure
+
+```
+app/
+├── main.py          # FastAPI app, middleware, Jinja2 filters
+├── models.py        # SQLAlchemy models
+├── database.py      # Engine and session
+├── auth.py          # Password hashing, CSRF, authentication
+├── deps.py          # FastAPI dependencies (login_required, ctx)
+├── flash.py         # Session flash messages
+├── pagination.py    # Query pagination
+├── label_pdf.py     # PDF label generation with QR codes
+└── routers/
+    ├── setup.py     # First-run setup wizard
+    ├── auth.py      # Login / logout
+    ├── dashboard.py # Home page
+    ├── assets.py    # Asset CRUD, assignment, labels
+    ├── licenses.py  # License CRUD, user assignment
+    ├── users.py     # User and password management
+    └── categories.py# Categories and departments
+templates/           # Jinja2 templates
+static/              # CSS, JS, icons, logo
+tests/               # pytest suite (69 tests)
+```
+
+## Security
+
+- Setup wizard — the app is inaccessible until an admin account exists
+- CSRF tokens verified on every POST request
+- Passwords hashed with bcrypt
+- Login rate limiting: 5 attempts per 5 minutes per IP
+- Open redirect protection on post-login redirect
+- `same_site=strict` on the session cookie
+- `https_only` configurable via `HTTPS_ONLY=true`
+- Jinja2 autoescape enabled
