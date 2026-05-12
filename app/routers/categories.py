@@ -45,7 +45,7 @@ async def category_list(
         dept.user_count = cnt
         dept_list.append(dept)
 
-    return templates.TemplateResponse("category_list.html", {
+    return templates.TemplateResponse(request, "category_list.html", {
         **base,
         "categories": cat_list,
         "departments": dept_list,
@@ -61,7 +61,7 @@ async def dept_create_get(
     user=Depends(login_required),
 ):
     base = ctx(request, db)
-    return templates.TemplateResponse("department_form.html", {
+    return templates.TemplateResponse(request, "department_form.html", {
         **base, "title": "Dodaj dział",
         "errors": {}, "form_data": {},
     })
@@ -81,7 +81,7 @@ async def dept_create_post(
     if not name.strip():
         errors["name"] = ["To pole jest wymagane."]
     if errors:
-        return templates.TemplateResponse("department_form.html", {
+        return templates.TemplateResponse(request, "department_form.html", {
             **base, "title": "Dodaj dział",
             "errors": errors, "form_data": {"name": name},
         }, status_code=400)
@@ -102,7 +102,7 @@ async def dept_update_get(
     if not dept:
         return RedirectResponse("/categories/", status_code=302)
     base = ctx(request, db)
-    return templates.TemplateResponse("department_form.html", {
+    return templates.TemplateResponse(request, "department_form.html", {
         **base, "title": f"Edytuj {dept.name}",
         "object": dept,
         "errors": {}, "form_data": {"name": dept.name},
@@ -126,7 +126,7 @@ async def dept_update_post(
     if not name.strip():
         errors["name"] = ["To pole jest wymagane."]
     if errors:
-        return templates.TemplateResponse("department_form.html", {
+        return templates.TemplateResponse(request, "department_form.html", {
             **base, "title": f"Edytuj {dept.name}", "object": dept,
             "errors": errors, "form_data": {"name": name},
         }, status_code=400)

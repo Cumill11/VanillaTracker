@@ -53,7 +53,7 @@ async def dashboard(
         .limit(10).all()
     )
 
-    return templates.TemplateResponse("dashboard.html", {
+    return templates.TemplateResponse(request, "dashboard.html", {
         **base,
         "total_assets":      db.query(Asset).count(),
         "assigned_assets":   db.query(Asset).filter_by(status=Asset.STATUS_ASSIGNED).count(),

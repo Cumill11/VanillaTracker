@@ -40,7 +40,7 @@ async def login_get(request: Request, db: Session = Depends(get_db)):
     base = ctx(request, db)
     if base["user"]:
         return RedirectResponse("/", status_code=302)
-    return templates.TemplateResponse("login.html", {**base, "errors": {}})
+    return templates.TemplateResponse(request, "login.html", {**base, "errors": {}})
 
 
 @router.post("/login/", name="login-post")
@@ -60,6 +60,7 @@ async def login_post(
     user = authenticate(db, username, password)
     if not user:
         return templates.TemplateResponse(
+            request,
             "login.html",
             {**base, "errors": {"__all__": ["Nieprawidłowy login lub hasło."]},
              "username": username},

@@ -66,7 +66,7 @@ async def user_list(
     for u in pagination.items:
         u.asset_count = asset_counts.get(u.id, 0)
 
-    return templates.TemplateResponse("user_list.html", {
+    return templates.TemplateResponse(request, "user_list.html", {
         **base,
         "users": pagination.items,
         "pagination": pagination,
@@ -86,7 +86,7 @@ async def user_create_get(
     user=Depends(login_required),
 ):
     base = ctx(request, db)
-    return templates.TemplateResponse("user_form.html", {
+    return templates.TemplateResponse(request, "user_form.html", {
         **base,
         "title": "Dodaj użytkownika",
         "departments": db.query(Department).order_by(Department.name).all(),
@@ -135,7 +135,7 @@ async def user_create_post(
         form_data = dict(first_name=first_name, last_name=last_name, email=email,
                          department_id=department_id, position=position, phone=phone,
                          can_login=can_login, username=username)
-        return templates.TemplateResponse("user_form.html", {
+        return templates.TemplateResponse(request, "user_form.html", {
             **base, "title": "Dodaj użytkownika",
             "departments": db.query(Department).order_by(Department.name).all(),
             "errors": errors, "form_data": form_data,
@@ -190,7 +190,7 @@ async def user_detail(
         .order_by(AssetHistory.created_at.desc())
         .limit(20).all()
     )
-    return templates.TemplateResponse("user_detail.html", {
+    return templates.TemplateResponse(request, "user_detail.html", {
         **base,
         "profile_user": profile_user,
         "assigned_assets": assigned_assets,
@@ -222,7 +222,7 @@ async def user_update_get(
         "phone": profile.phone if profile else "",
         "is_active_employee": "1" if (profile and profile.is_active_employee) else "",
     }
-    return templates.TemplateResponse("user_form.html", {
+    return templates.TemplateResponse(request, "user_form.html", {
         **base,
         "title": f"Edytuj {edit_user.get_full_name()}",
         "edit_user": edit_user,
@@ -283,7 +283,7 @@ async def user_password_get(
     if not user.is_superuser and user.id != pk:
         add_message(request, "Nie masz uprawnień do zmiany hasła tego użytkownika.", "error")
         return RedirectResponse(f"/users/{pk}/", status_code=302)
-    return templates.TemplateResponse("user_password_form.html", {
+    return templates.TemplateResponse(request, "user_password_form.html", {
         **ctx(request, db),
         "edit_user": edit_user,
         "require_current": not user.is_superuser,
@@ -323,7 +323,7 @@ async def user_password_post(
         errors["password2"] = ["Hasła nie są identyczne."]
 
     if errors:
-        return templates.TemplateResponse("user_password_form.html", {
+        return templates.TemplateResponse(request, "user_password_form.html", {
             **ctx(request, db),
             "edit_user": edit_user,
             "require_current": require_current,

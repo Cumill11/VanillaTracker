@@ -71,7 +71,7 @@ async def license_list(
         qs = qs.filter(License.status == status)
     qs = qs.order_by(License.tag_number)
     pagination = paginate(qs, page)
-    return templates.TemplateResponse("license_list.html", {
+    return templates.TemplateResponse(request, "license_list.html", {
         **base,
         "licenses": pagination.items,
         "pagination": pagination,
@@ -90,7 +90,7 @@ async def license_create_get(
     user=Depends(login_required),
 ):
     base = ctx(request, db)
-    return templates.TemplateResponse("license_form.html", {
+    return templates.TemplateResponse(request, "license_form.html", {
         **base,
         "title": "Dodaj licencję",
         "status_choices": License.STATUS_CHOICES,
@@ -123,7 +123,7 @@ async def license_create_post(
         form_data = dict(name=name, vendor=vendor, license_key=license_key, seats=seats,
                          purchase_date=purchase_date, expiry_date=expiry_date,
                          purchase_price=purchase_price, status=status, notes=notes)
-        return templates.TemplateResponse("license_form.html", {
+        return templates.TemplateResponse(request, "license_form.html", {
             **base, "title": "Dodaj licencję",
             "status_choices": License.STATUS_CHOICES,
             "errors": errors, "form_data": form_data,
@@ -165,7 +165,7 @@ async def license_detail(
     )
     all_users = db.query(User).filter_by(is_active=True).order_by(User.last_name, User.first_name).all()
     assigned_ids = {u.id for u in lic.assigned_users}
-    return templates.TemplateResponse("license_detail.html", {
+    return templates.TemplateResponse(request, "license_detail.html", {
         **base,
         "license": lic,
         "history": history,
@@ -194,7 +194,7 @@ async def license_update_get(
         "purchase_price": str(lic.purchase_price) if lic.purchase_price else "",
         "status": lic.status, "notes": lic.notes,
     }
-    return templates.TemplateResponse("license_form.html", {
+    return templates.TemplateResponse(request, "license_form.html", {
         **base,
         "title": f"Edytuj {lic.asset_tag}",
         "object": lic,
@@ -231,7 +231,7 @@ async def license_update_post(
         form_data = dict(name=name, vendor=vendor, license_key=license_key, seats=seats,
                          purchase_date=purchase_date, expiry_date=expiry_date,
                          purchase_price=purchase_price, status=status, notes=notes)
-        return templates.TemplateResponse("license_form.html", {
+        return templates.TemplateResponse(request, "license_form.html", {
             **base, "title": f"Edytuj {lic.asset_tag}", "object": lic,
             "status_choices": License.STATUS_CHOICES,
             "errors": errors, "form_data": form_data,
@@ -263,7 +263,7 @@ async def license_delete_get(
     if not lic:
         return RedirectResponse("/licenses/", status_code=302)
     base = ctx(request, db)
-    return templates.TemplateResponse("confirm_delete.html", {
+    return templates.TemplateResponse(request, "confirm_delete.html", {
         **base,
         "object_name": f"{lic.asset_tag} — {lic.name}",
         "cancel_url": f"/licenses/{pk}/",

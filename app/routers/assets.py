@@ -115,7 +115,7 @@ async def asset_list(
         qs = qs.order_by(order_col)
 
     pagination = paginate(qs, page)
-    return templates.TemplateResponse("asset_list.html", {
+    return templates.TemplateResponse(request, "asset_list.html", {
         **base,
         "assets": pagination.items,
         "pagination": pagination,
@@ -137,7 +137,7 @@ async def asset_create_get(
     user=Depends(login_required),
 ):
     base = ctx(request, db)
-    return templates.TemplateResponse("asset_form.html", {
+    return templates.TemplateResponse(request, "asset_form.html", {
         **base,
         "title": "Dodaj sprzęt",
         "categories": db.query(Category).order_by(Category.name).all(),
@@ -188,7 +188,7 @@ async def asset_create_post(
             "cpu": cpu, "ram": ram, "storage": storage,
             "phone_number": phone_number, "ink_type": ink_type,
         }
-        return templates.TemplateResponse("asset_form.html", {
+        return templates.TemplateResponse(request, "asset_form.html", {
             **base, "title": "Dodaj sprzęt",
             "categories": db.query(Category).order_by(Category.name).all(),
             "status_choices": Asset.STATUS_CHOICES,
@@ -268,7 +268,7 @@ async def asset_detail(
         .all()
     )
     users_qs = db.query(User).filter_by(is_active=True).order_by(User.last_name, User.first_name).all()
-    return templates.TemplateResponse("asset_detail.html", {
+    return templates.TemplateResponse(request, "asset_detail.html", {
         **base,
         "asset": asset,
         "history": history,
@@ -299,7 +299,7 @@ async def asset_update_get(
         "cpu": asset.cpu or "", "ram": asset.ram or "", "storage": asset.storage or "",
         "phone_number": asset.phone_number or "", "ink_type": asset.ink_type or "",
     }
-    return templates.TemplateResponse("asset_form.html", {
+    return templates.TemplateResponse(request, "asset_form.html", {
         **base,
         "title": f"Edytuj {asset.asset_tag}",
         "object": asset,
@@ -351,7 +351,7 @@ async def asset_update_post(
             "cpu": cpu, "ram": ram, "storage": storage,
             "phone_number": phone_number, "ink_type": ink_type,
         }
-        return templates.TemplateResponse("asset_form.html", {
+        return templates.TemplateResponse(request, "asset_form.html", {
             **base, "title": f"Edytuj {asset.asset_tag}", "object": asset,
             "categories": db.query(Category).order_by(Category.name).all(),
             "status_choices": Asset.STATUS_CHOICES,
@@ -392,7 +392,7 @@ async def asset_delete_get(
     if not asset:
         return RedirectResponse("/assets/", status_code=302)
     base = ctx(request, db)
-    return templates.TemplateResponse("confirm_delete.html", {
+    return templates.TemplateResponse(request, "confirm_delete.html", {
         **base,
         "object_name": f"{asset.asset_tag} — {asset.name}",
         "cancel_url": f"/assets/{pk}/",

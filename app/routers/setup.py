@@ -26,7 +26,7 @@ def _ctx(request: Request) -> dict:
 async def setup_get(request: Request):
     if not setup_needed:
         return RedirectResponse("/", status_code=302)
-    return templates.TemplateResponse("setup.html", {**_ctx(request), "errors": {}})
+    return templates.TemplateResponse(request, "setup.html", {**_ctx(request), "errors": {}})
 
 
 @router.post("/setup/", name="setup-post")
@@ -63,6 +63,7 @@ async def setup_post(
 
     if errors:
         return templates.TemplateResponse(
+            request,
             "setup.html",
             {
                 **_ctx(request),
