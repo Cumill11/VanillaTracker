@@ -477,7 +477,7 @@ async def asset_return(
         ))
         asset.assigned_to_id = None
         asset.assigned_date = None
-        asset.status = Asset.STATUS_AVAILABLE
+        asset.status = Asset.STATUS_ASSIGNED if asset.department_id else Asset.STATUS_AVAILABLE
         db.commit()
         add_message(request, f"{asset.asset_tag} zwrócony.")
     return RedirectResponse(f"/assets/{pk}/", status_code=302)
@@ -499,16 +499,20 @@ async def asset_assign_dept(
         new_dept_id = _parse_int(department_id)
         asset.department_id = new_dept_id
         dept = db.query(Department).filter_by(id=new_dept_id).first() if new_dept_id else None
-        note = f"Dział: {dept.name}" if dept else "Usunięto przypisanie do działu"
+        if dept:
+            asset.status = Asset.STATUS_ASSIGNED
+            note = f"Dział: {dept.name}"
+            add_message(request, f"{asset.asset_tag} przypisany do działu {dept.name}.")
+        else:
+            if not asset.assigned_to_id:
+                asset.status = Asset.STATUS_AVAILABLE
+            note = "Usunięto przypisanie do działu"
+            add_message(request, f"{asset.asset_tag} — usunięto przypisanie do działu.")
         db.add(AssetHistory(
             asset_id=asset.id, action=AssetHistory.ACTION_ASSIGN_DEPT,
             performed_by_id=user.id, note=note,
         ))
         db.commit()
-        if dept:
-            add_message(request, f"{asset.asset_tag} przypisany do działu {dept.name}.")
-        else:
-            add_message(request, f"{asset.asset_tag} — usunięto przypisanie do działu.")
     return RedirectResponse(f"/assets/{pk}/", status_code=302)
 
 

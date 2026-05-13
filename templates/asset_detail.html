@@ -46,7 +46,7 @@
             <span class="field-value category-badge">
               {% if asset.category %}
               <span class="material-icons-round">{{ asset.category.slug|category_icon }}</span>
-              {{ asset.category.name }}
+              {{ t.get('cat_' + asset.category.slug, asset.category.name) }}
               {% else %}—{% endif %}
             </span>
           </div>

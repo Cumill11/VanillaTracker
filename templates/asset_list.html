@@ -67,7 +67,7 @@
             {% if asset.category %}
             <span class="category-badge">
               <span class="material-icons-round">{{ asset.category.slug|category_icon }}</span>
-              {{ asset.category.name }}
+              {{ t.get('cat_' + asset.category.slug, asset.category.name) }}
             </span>
             {% else %}—{% endif %}
           </td>

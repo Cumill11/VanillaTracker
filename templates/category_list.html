@@ -20,7 +20,7 @@
           <span class="material-icons-round" style="font-size:20px;color:var(--md-on-primary-container)">{{ cat.slug|category_icon }}</span>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:14px;font-weight:500;color:var(--md-on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ cat.name }}</div>
+          <div style="font-size:14px;font-weight:500;color:var(--md-on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.get('cat_' + cat.slug, cat.name) }}</div>
           <div class="text-xs text-muted font-mono">{{ cat.slug }}</div>
         </div>
         <a href="{{ url_for('asset-list') }}?category={{ cat.id }}" class="asset-tag" style="font-size:12px;flex-shrink:0">{{ cat.asset_count }}</a>

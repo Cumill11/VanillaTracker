@@ -55,7 +55,7 @@
       {% for cat in categories %}
       <a href="{{ url_for('asset-list') }}?category={{ cat.id }}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--md-outline-variant);text-decoration:none;color:var(--md-on-surface)">
         <span class="material-icons-round" style="font-size:18px;color:var(--md-primary)">{{ cat.slug|category_icon }}</span>
-        <span style="flex:1;font-size:14px">{{ cat.name }}</span>
+        <span style="flex:1;font-size:14px">{{ t.get('cat_' + cat.slug, cat.name) }}</span>
         <span class="asset-tag" style="font-size:12px">{{ cat.asset_count }}</span>
       </a>
       {% endfor %}
