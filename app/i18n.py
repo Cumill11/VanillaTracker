@@ -27,6 +27,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "action_status": "Zmiana statusu",
         "action_create": "Dodano",
         "action_delete": "Usunięto",
+        "action_assign_dept": "Przypisanie do działu",
         # Common
         "btn_save": "Zapisz",
         "btn_cancel": "Anuluj",
@@ -102,6 +103,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "asset_return_btn": "Zwróć sprzęt",
         "asset_change_status_hint": 'Zmień status na "Dostępny" aby przypisać.',
         "asset_since": "od",
+        "asset_dept_title": "Dział",
+        "asset_dept": "Dział",
+        "asset_no_dept": "Sprzęt nie jest przypisany do działu.",
+        "asset_dept_btn": "Zapisz dział",
         # Licenses
         "licenses_title": "Licencje",
         "licenses_add": "Dodaj licencję",
@@ -220,6 +225,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "action_status": "Status change",
         "action_create": "Created",
         "action_delete": "Deleted",
+        "action_assign_dept": "Department assignment",
         # Common
         "btn_save": "Save",
         "btn_cancel": "Cancel",
@@ -295,6 +301,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "asset_return_btn": "Return asset",
         "asset_change_status_hint": "Change status to \"Available\" to assign.",
         "asset_since": "since",
+        "asset_dept_title": "Department",
+        "asset_dept": "Department",
+        "asset_no_dept": "Asset is not assigned to a department.",
+        "asset_dept_btn": "Save department",
         # Licenses
         "licenses_title": "Licenses",
         "licenses_add": "Add license",

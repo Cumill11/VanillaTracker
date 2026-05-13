@@ -133,6 +133,7 @@
               {% if h.action == 'assign' %}<span class="material-icons-round">person_add</span>
               {% elif h.action == 'return' %}<span class="material-icons-round">undo</span>
               {% elif h.action == 'maintenance' %}<span class="material-icons-round">build</span>
+              {% elif h.action == 'assign_dept' %}<span class="material-icons-round">business</span>
               {% else %}<span class="material-icons-round">edit_note</span>{% endif %}
             </div>
             <div class="timeline-content">
@@ -220,6 +221,38 @@
         <p class="text-muted text-xs">{{ t.asset_change_status_hint }}</p>
         {% endif %}
         {% endif %}
+      </div>
+    </div>
+
+    <!-- Department -->
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">business</span>
+        <h2>{{ t.asset_dept_title }}</h2>
+      </div>
+      <div class="card-body">
+        {% if asset.department %}
+        <div style="font-size:15px;font-weight:500;color:var(--md-on-surface);margin-bottom:16px">
+          <span class="material-icons-round" style="font-size:16px;vertical-align:-3px;margin-right:4px">business</span>
+          {{ asset.department.name }}
+        </div>
+        {% else %}
+        <p class="text-muted text-sm mb-16">{{ t.asset_no_dept }}</p>
+        {% endif %}
+        <form method="post" action="/assets/{{ asset.id }}/assign-dept/">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="form-group mb-16">
+            <select name="department_id" class="md3-select">
+              <option value="">{{ t.lbl_none }}</option>
+              {% for dept in departments %}
+              <option value="{{ dept.id }}" {% if asset.department_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-tonal btn-sm" style="width:100%">
+            <span class="material-icons-round">save</span> {{ t.asset_dept_btn }}
+          </button>
+        </form>
       </div>
     </div>
 

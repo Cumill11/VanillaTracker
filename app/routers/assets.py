@@ -11,7 +11,7 @@ from app.database import get_db
 from app.auth import verify_csrf
 from app.deps import ctx, login_required
 from app.flash import add_message
-from app.models import Asset, AssetCounter, AssetHistory, Category, Settings, User
+from app.models import Asset, AssetCounter, AssetHistory, Category, Department, Settings, User
 from app.pagination import paginate
 from app.label_pdf import generate_labels_pdf
 
@@ -141,6 +141,7 @@ async def asset_create_get(
         **base,
         "title": "Dodaj sprzęt",
         "categories": db.query(Category).order_by(Category.name).all(),
+        "departments": db.query(Department).order_by(Department.name).all(),
         "status_choices": Asset.STATUS_CHOICES,
         "categories_json": _categories_json(db),
         "errors": {},
@@ -169,6 +170,7 @@ async def asset_create_post(
     storage: str = Form(""),
     phone_number: str = Form(""),
     ink_type: str = Form(""),
+    department_id: str = Form(""),
     csrf_token: str = Form(""),
 ):
     verify_csrf(request, csrf_token)
@@ -187,10 +189,12 @@ async def asset_create_post(
             "location": location, "notes": notes,
             "cpu": cpu, "ram": ram, "storage": storage,
             "phone_number": phone_number, "ink_type": ink_type,
+            "department_id": department_id,
         }
         return templates.TemplateResponse(request, "asset_form.html", {
             **base, "title": "Dodaj sprzęt",
             "categories": db.query(Category).order_by(Category.name).all(),
+            "departments": db.query(Department).order_by(Department.name).all(),
             "status_choices": Asset.STATUS_CHOICES,
             "categories_json": _categories_json(db),
             "errors": errors, "form_data": form_data,
@@ -208,6 +212,7 @@ async def asset_create_post(
         status=status, location=location.strip(), notes=notes.strip(),
         cpu=cpu.strip(), ram=ram.strip(), storage=storage.strip(),
         phone_number=phone_number.strip(), ink_type=ink_type.strip(),
+        department_id=_parse_int(department_id),
     )
     db.add(asset)
     db.flush()
@@ -273,6 +278,7 @@ async def asset_detail(
         "asset": asset,
         "history": history,
         "users": users_qs,
+        "departments": db.query(Department).order_by(Department.name).all(),
     })
 
 
@@ -298,12 +304,14 @@ async def asset_update_get(
         "status": asset.status, "location": asset.location, "notes": asset.notes,
         "cpu": asset.cpu or "", "ram": asset.ram or "", "storage": asset.storage or "",
         "phone_number": asset.phone_number or "", "ink_type": asset.ink_type or "",
+        "department_id": str(asset.department_id or ""),
     }
     return templates.TemplateResponse(request, "asset_form.html", {
         **base,
         "title": f"Edytuj {asset.asset_tag}",
         "object": asset,
         "categories": db.query(Category).order_by(Category.name).all(),
+        "departments": db.query(Department).order_by(Department.name).all(),
         "status_choices": Asset.STATUS_CHOICES,
         "categories_json": _categories_json(db),
         "errors": {}, "form_data": form_data,
@@ -331,6 +339,7 @@ async def asset_update_post(
     storage: str = Form(""),
     phone_number: str = Form(""),
     ink_type: str = Form(""),
+    department_id: str = Form(""),
     csrf_token: str = Form(""),
 ):
     verify_csrf(request, csrf_token)
@@ -350,10 +359,12 @@ async def asset_update_post(
             "location": location, "notes": notes,
             "cpu": cpu, "ram": ram, "storage": storage,
             "phone_number": phone_number, "ink_type": ink_type,
+            "department_id": department_id,
         }
         return templates.TemplateResponse(request, "asset_form.html", {
             **base, "title": f"Edytuj {asset.asset_tag}", "object": asset,
             "categories": db.query(Category).order_by(Category.name).all(),
+            "departments": db.query(Department).order_by(Department.name).all(),
             "status_choices": Asset.STATUS_CHOICES,
             "categories_json": _categories_json(db),
             "errors": errors, "form_data": form_data,
@@ -375,6 +386,7 @@ async def asset_update_post(
     asset.storage = storage.strip()
     asset.phone_number = phone_number.strip()
     asset.ink_type = ink_type.strip()
+    asset.department_id = _parse_int(department_id)
     db.commit()
     add_message(request, f"Sprzęt {asset.asset_tag} zaktualizowany.")
     return RedirectResponse(f"/assets/{asset.id}/", status_code=302)
@@ -468,6 +480,35 @@ async def asset_return(
         asset.status = Asset.STATUS_AVAILABLE
         db.commit()
         add_message(request, f"{asset.asset_tag} zwrócony.")
+    return RedirectResponse(f"/assets/{pk}/", status_code=302)
+
+
+# ── Assign to department ──────────────────────────────────────────────────────
+
+@router.post("/{pk}/assign-dept/", name="asset-assign-dept")
+async def asset_assign_dept(
+    pk: int, request: Request,
+    db: Session = Depends(get_db),
+    user=Depends(login_required),
+    department_id: str = Form(""),
+    csrf_token: str = Form(""),
+):
+    verify_csrf(request, csrf_token)
+    asset = db.query(Asset).filter_by(id=pk).first()
+    if asset:
+        new_dept_id = _parse_int(department_id)
+        asset.department_id = new_dept_id
+        dept = db.query(Department).filter_by(id=new_dept_id).first() if new_dept_id else None
+        note = f"Dział: {dept.name}" if dept else "Usunięto przypisanie do działu"
+        db.add(AssetHistory(
+            asset_id=asset.id, action=AssetHistory.ACTION_ASSIGN_DEPT,
+            performed_by_id=user.id, note=note,
+        ))
+        db.commit()
+        if dept:
+            add_message(request, f"{asset.asset_tag} przypisany do działu {dept.name}.")
+        else:
+            add_message(request, f"{asset.asset_tag} — usunięto przypisanie do działu.")
     return RedirectResponse(f"/assets/{pk}/", status_code=302)
 
 

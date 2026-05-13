@@ -128,6 +128,7 @@ class Asset(Base):
     status = Column(String(20), default="available", index=True)
     assigned_to_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     assigned_date = Column(Date, nullable=True)
+    department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     location = Column(String(200), default="")
     notes = Column(Text, default="")
     cpu = Column(String(200), default="")
@@ -143,6 +144,7 @@ class Asset(Base):
         "User", back_populates="assigned_assets",
         foreign_keys=[assigned_to_id],
     )
+    department = relationship("Department", foreign_keys=[department_id])
     history = relationship(
         "AssetHistory", back_populates="asset",
         foreign_keys="AssetHistory.asset_id",
@@ -201,6 +203,7 @@ class AssetHistory(Base):
     ACTION_MAINTENANCE = "maintenance"
     ACTION_NOTE = "note"
     ACTION_STATUS = "status"
+    ACTION_ASSIGN_DEPT = "assign_dept"
 
     ACTION_CHOICES = [
         ("assign", "Przypisanie"),
@@ -208,6 +211,7 @@ class AssetHistory(Base):
         ("maintenance", "Serwis"),
         ("note", "Notatka"),
         ("status", "Zmiana statusu"),
+        ("assign_dept", "Przypisanie do działu"),
     ]
 
     id = Column(Integer, primary_key=True)

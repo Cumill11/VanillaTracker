@@ -12,6 +12,7 @@ from app.i18n import lang_context_processor
 
 load_dotenv()
 
+from sqlalchemy import inspect as sa_inspect, text
 from app.database import engine, Base, SessionLocal
 from app.deps import _Redirect
 from app.routers import auth, dashboard, assets, licenses, users, categories
@@ -29,6 +30,14 @@ if SECRET_KEY == _DEFAULT_SECRET:
 
 # Create tables, seed required data, detect first-run
 Base.metadata.create_all(bind=engine)
+
+# Migrate existing databases: add department_id to assets if missing
+_insp = sa_inspect(engine)
+if "assets" in _insp.get_table_names():
+    if "department_id" not in [c["name"] for c in _insp.get_columns("assets")]:
+        with engine.connect() as _conn:
+            _conn.execute(text("ALTER TABLE assets ADD COLUMN department_id INTEGER"))
+            _conn.commit()
 
 _CATEGORIES = [
     ("Laptop", "laptop"), ("Komputer stacjonarny", "desktop"),

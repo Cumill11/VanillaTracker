@@ -76,6 +76,11 @@
           <td class="col-hide-sm">
             {% if asset.assigned_to %}
             <a href="/users/{{ asset.assigned_to.id }}/">{{ asset.assigned_to.get_full_name() }}</a>
+            {% elif asset.department %}
+            <span class="text-muted" style="font-size:13px">
+              <span class="material-icons-round" style="font-size:14px;vertical-align:-3px">business</span>
+              {{ asset.department.name }}
+            </span>
             {% else %}—{% endif %}
           </td>
           <td>

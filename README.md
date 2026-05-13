@@ -7,7 +7,7 @@ System ewidencji sprzętu IT zbudowany na FastAPI. Umożliwia zarządzanie sprz�
 - Kreator pierwszego uruchomienia — tworzy konto administratora i konfiguruje prefiks numerów inwentarzowych
 - Ewidencja sprzętu z numerami IT-XXXXX (prefiks konfigurowalny) i kodami QR na etykietach PDF
 - Pola specyficzne dla kategorii: CPU/RAM/dysk (laptop, desktop), numer telefonu (telefon/tablet), tusz (drukarka)
-- Przypisywanie i zdawanie sprzętu z historią operacji
+- Przypisywanie sprzętu do osoby lub działu z historią operacji
 - Zarządzanie licencjami (miejsca, daty wygaśnięcia, przypisanie do użytkowników)
 - Zarządzanie użytkownikami z podziałem na działy
 - Paginacja, filtrowanie i wyszukiwanie na wszystkich listach
@@ -147,7 +147,7 @@ IT asset management system built with FastAPI. Manage hardware, licenses and use
 - First-run setup wizard — creates an admin account and configures the asset tag prefix
 - Asset tracking with customisable tag numbers (e.g. IT-00001) and QR code PDF labels
 - Category-specific fields: CPU/RAM/storage (laptop, desktop), phone number (phone/tablet), ink (printer)
-- Asset assignment and return with full operation history
+- Asset assignment to a person or department with full operation history
 - License management (seats, expiry dates, user assignments)
 - User management with department grouping
 - Pagination, filtering and search on all list views
