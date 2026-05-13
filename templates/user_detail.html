@@ -5,16 +5,16 @@
 
 {% block top_actions %}
 <a href="/users/{{ profile_user.id }}/edit/" class="btn btn-tonal btn-sm">
-  <span class="material-icons-round">edit</span> Edytuj
+  <span class="material-icons-round">edit</span> {{ t.user_edit }}
 </a>
 <a href="/users/{{ profile_user.id }}/password/" class="btn btn-tonal btn-sm">
-  <span class="material-icons-round">lock_reset</span> Zmień hasło
+  <span class="material-icons-round">lock_reset</span> {{ t.user_change_password }}
 </a>
 {% endblock %}
 
 {% block breadcrumb %}
 <div class="breadcrumb">
-  <a href="{{ url_for('user-list') }}">Użytkownicy</a>
+  <a href="{{ url_for('user-list') }}">{{ t.nav_users }}</a>
   <span class="sep material-icons-round">chevron_right</span>
   <span class="current">{{ profile_user.get_full_name() }}</span>
 </div>
@@ -28,7 +28,7 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">devices</span>
-        <h2>Przypisany sprzęt</h2>
+        <h2>{{ t.user_assets_title }}</h2>
         <span class="asset-tag" style="font-size:12px">{{ assigned_assets|length }}</span>
       </div>
       {% if assigned_assets %}
@@ -45,7 +45,7 @@
       {% else %}
       <div class="empty-state" style="padding:30px">
         <span class="material-icons-round" style="font-size:36px">devices</span>
-        <p>Brak przypisanego sprzętu</p>
+        <p>{{ t.user_no_assets }}</p>
       </div>
       {% endif %}
     </div>
@@ -55,14 +55,14 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">key</span>
-        <h2>Licencje</h2>
+        <h2>{{ t.nav_licenses }}</h2>
       </div>
       <div class="card-body" style="padding:0">
         {% for l in licenses %}
         <a href="/licenses/{{ l.id }}/" style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--md-outline-variant);text-decoration:none;color:var(--md-on-surface)">
           <span class="asset-tag" style="background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)">{{ l.asset_tag }}</span>
           <span style="flex:1;font-size:14px">{{ l.name }}</span>
-          {{ l.status|status_chip }}
+          {{ l.status|status_chip(t.get('status_' + l.status, l.status)) }}
         </a>
         {% endfor %}
       </div>
@@ -73,7 +73,7 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">history</span>
-        <h2>Historia</h2>
+        <h2>{{ t.lbl_history }}</h2>
       </div>
       <div class="card-body">
         <div class="timeline">
@@ -85,11 +85,11 @@
               {% else %}<span class="material-icons-round">edit_note</span>{% endif %}
             </div>
             <div class="timeline-content">
-              <div class="timeline-title">{{ h.get_action_display() }}
+              <div class="timeline-title">{{ t.get('action_' + h.action, h.action) }}
                 {% if h.asset %}<a href="/assets/{{ h.asset.id }}/">{{ h.asset.asset_tag }}</a>{% endif %}
               </div>
               <div class="timeline-meta">{{ h.created_at|date_fmt('%d.%m.%Y %H:%M') }}
-                {% if h.performed_by %} · przez {{ h.performed_by.get_full_name() }}{% endif %}
+                {% if h.performed_by %} · {{ t.lbl_by }} {{ h.performed_by.get_full_name() }}{% endif %}
               </div>
               {% if h.note %}<div class="text-sm text-muted" style="margin-top:2px">{{ h.note }}</div>{% endif %}
             </div>
@@ -97,7 +97,7 @@
           {% else %}
           <div class="empty-state" style="padding:20px">
             <span class="material-icons-round" style="font-size:32px">history</span>
-            <p>Brak historii</p>
+            <p>{{ t.lbl_no_history }}</p>
           </div>
           {% endfor %}
         </div>
@@ -110,7 +110,7 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">badge</span>
-        <h2>Profil</h2>
+        <h2>{{ t.user_profile }}</h2>
       </div>
       <div class="card-body">
         <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--md-outline-variant)">
@@ -124,28 +124,28 @@
         </div>
 
         <div class="detail-field">
-          <span class="field-label">Login</span>
+          <span class="field-label">{{ t.user_login }}</span>
           <span class="field-value font-mono text-sm">{{ profile_user.username }}</span>
         </div>
         <div class="detail-field">
-          <span class="field-label">Email</span>
+          <span class="field-label">{{ t.user_email }}</span>
           <span class="field-value">{{ profile_user.email or '—' }}</span>
         </div>
         <div class="detail-field">
-          <span class="field-label">Dział</span>
+          <span class="field-label">{{ t.user_dept }}</span>
           <span class="field-value">{{ profile_user.profile.department.name if profile_user.profile and profile_user.profile.department else '—' }}</span>
         </div>
         <div class="detail-field">
-          <span class="field-label">Telefon</span>
+          <span class="field-label">{{ t.user_phone }}</span>
           <span class="field-value">{{ profile_user.profile.phone if profile_user.profile and profile_user.profile.phone else '—' }}</span>
         </div>
         <div class="detail-field">
-          <span class="field-label">Status</span>
+          <span class="field-label">{{ t.lbl_status }}</span>
           <span class="field-value">
             {% if profile_user.is_active %}
-            <span class="status-chip" style="background:#4CAF5020;color:#4CAF50;border:1px solid #4CAF5040">Aktywny</span>
+            <span class="status-chip" style="background:#4CAF5020;color:#4CAF50;border:1px solid #4CAF5040">{{ t.user_status_active }}</span>
             {% else %}
-            <span class="status-chip" style="background:#9E9E9E20;color:#9E9E9E;border:1px solid #9E9E9E40">Nieaktywny</span>
+            <span class="status-chip" style="background:#9E9E9E20;color:#9E9E9E;border:1px solid #9E9E9E40">{{ t.user_status_inactive }}</span>
             {% endif %}
           </span>
         </div>

@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Sprzęt{% endblock %}
-{% block page_title %}Sprzęt{% endblock %}
+{% block title %}{{ t.assets_title }}{% endblock %}
+{% block page_title %}{{ t.assets_title }}{% endblock %}
 
 {% block top_actions %}
 <form method="post" action="{{ url_for('asset-labels-bulk') }}" id="bulk-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   <button type="submit" class="btn btn-outlined btn-sm" id="bulk-label-btn" style="display:none">
-    <span class="material-icons-round">label</span> Etykiety PDF
+    <span class="material-icons-round">label</span> {{ t.assets_pdf_labels }}
   </button>
 </form>
 <a href="{{ url_for('asset-create') }}" class="btn btn-filled btn-sm">
-  <span class="material-icons-round">add</span> Dodaj sprzęt
+  <span class="material-icons-round">add</span> {{ t.assets_add }}
 </a>
 {% endblock %}
 
@@ -21,18 +21,18 @@
   <div class="filters-bar">
     <div class="search-field">
       <span class="material-icons-round">search</span>
-      <input type="text" name="q" value="{{ current_q }}" placeholder="Szukaj..." oninput="this.form.submit()">
+      <input type="text" name="q" value="{{ current_q }}" placeholder="{{ t.lbl_search }}" oninput="this.form.submit()">
     </div>
     <select name="category" class="md3-select" style="width:auto" onchange="this.form.submit()">
-      <option value="">Wszystkie kategorie</option>
+      <option value="">{{ t.lbl_all_categories }}</option>
       {% for cat in categories %}
       <option value="{{ cat.id }}" {% if current_category == cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
       {% endfor %}
     </select>
     <select name="status" class="md3-select" style="width:auto" onchange="this.form.submit()">
-      <option value="">Wszystkie statusy</option>
+      <option value="">{{ t.lbl_all_statuses }}</option>
       {% for val, label in status_choices %}
-      <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+      <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ t.get('status_' + val, label) }}</option>
       {% endfor %}
     </select>
   </div>
@@ -45,12 +45,12 @@
       <thead>
         <tr>
           <th style="width:36px"><input type="checkbox" id="select-all" style="width:16px;height:16px;accent-color:var(--md-primary)"></th>
-          <th><a href="?q={{ current_q }}&category={{ current_category }}&status={{ current_status }}&sort=tag_number" style="color:inherit;text-decoration:none">Tag</a></th>
-          <th><a href="?q={{ current_q }}&category={{ current_category }}&status={{ current_status }}&sort=name" style="color:inherit;text-decoration:none">Nazwa</a></th>
-          <th class="col-hide-sm">Kategoria</th>
-          <th class="col-hide-sm">Producent / Model</th>
-          <th>Status</th>
-          <th class="col-hide-sm">Przypisany do</th>
+          <th><a href="?q={{ current_q }}&category={{ current_category }}&status={{ current_status }}&sort=tag_number" style="color:inherit;text-decoration:none">{{ t.assets_col_tag }}</a></th>
+          <th><a href="?q={{ current_q }}&category={{ current_category }}&status={{ current_status }}&sort=name" style="color:inherit;text-decoration:none">{{ t.assets_col_name }}</a></th>
+          <th class="col-hide-sm">{{ t.assets_col_category }}</th>
+          <th class="col-hide-sm">{{ t.assets_col_mfr_model }}</th>
+          <th>{{ t.lbl_status }}</th>
+          <th class="col-hide-sm">{{ t.assets_col_assigned }}</th>
           <th></th>
         </tr>
       </thead>
@@ -72,14 +72,14 @@
             {% else %}—{% endif %}
           </td>
           <td class="col-hide-sm">{{ asset.manufacturer }} {{ asset.model_name }}</td>
-          <td>{{ asset.status|status_chip }}</td>
+          <td>{{ asset.status|status_chip(t.get('status_' + asset.status, asset.status)) }}</td>
           <td class="col-hide-sm">
             {% if asset.assigned_to %}
             <a href="/users/{{ asset.assigned_to.id }}/">{{ asset.assigned_to.get_full_name() }}</a>
             {% else %}—{% endif %}
           </td>
           <td>
-            <a href="/assets/{{ asset.id }}/edit/" class="btn-icon" title="Edytuj">
+            <a href="/assets/{{ asset.id }}/edit/" class="btn-icon" title="{{ t.btn_edit }}">
               <span class="material-icons-round">edit</span>
             </a>
           </td>
@@ -88,8 +88,8 @@
         <tr><td colspan="8">
           <div class="empty-state">
             <span class="material-icons-round">devices</span>
-            <h3>Brak sprzętu</h3>
-            <p><a href="{{ url_for('asset-create') }}">Dodaj pierwszy sprzęt</a></p>
+            <h3>{{ t.assets_empty }}</h3>
+            <p><a href="{{ url_for('asset-create') }}">{{ t.assets_add_first }}</a></p>
           </div>
         </td></tr>
         {% endfor %}
@@ -103,7 +103,7 @@
     <a href="/assets/{{ asset.id }}/" class="mob-list-item">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
         <span class="asset-tag">{{ asset.asset_tag }}</span>
-        {{ asset.status|status_chip }}
+        {{ asset.status|status_chip(t.get('status_' + asset.status, asset.status)) }}
       </div>
       <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">{{ asset.name }}</div>
       <div class="text-sm text-muted">{{ asset.manufacturer }} {{ asset.model_name }}</div>
@@ -111,7 +111,7 @@
     {% else %}
     <div class="empty-state">
       <span class="material-icons-round">devices</span>
-      <h3>Brak sprzętu</h3>
+      <h3>{{ t.assets_empty }}</h3>
     </div>
     {% endfor %}
   </div>

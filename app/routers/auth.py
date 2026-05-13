@@ -1,5 +1,6 @@
 import time
 from collections import defaultdict
+from datetime import datetime
 from urllib.parse import urlparse
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import RedirectResponse
@@ -66,6 +67,8 @@ async def login_post(
              "username": username},
             status_code=400,
         )
+    user.last_login = datetime.utcnow()
+    db.commit()
     login_user(request, user)
     return RedirectResponse(_safe_redirect(next), status_code=302)
 

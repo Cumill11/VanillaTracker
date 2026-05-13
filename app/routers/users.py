@@ -281,7 +281,7 @@ async def user_password_get(
     if not edit_user:
         return RedirectResponse("/users/", status_code=302)
     if not user.is_superuser and user.id != pk:
-        add_message(request, "Nie masz uprawnień do zmiany hasła tego użytkownika.", "error")
+        add_message(request, "Nie masz uprawnień do zmiany hasła tego użytkownika.")
         return RedirectResponse(f"/users/{pk}/", status_code=302)
     return templates.TemplateResponse(request, "user_password_form.html", {
         **ctx(request, db),
@@ -306,7 +306,7 @@ async def user_password_post(
     if not edit_user:
         return RedirectResponse("/users/", status_code=302)
     if not user.is_superuser and user.id != pk:
-        add_message(request, "Nie masz uprawnień do zmiany hasła tego użytkownika.", "error")
+        add_message(request, "Nie masz uprawnień do zmiany hasła tego użytkownika.")
         return RedirectResponse(f"/users/{pk}/", status_code=302)
 
     require_current = not user.is_superuser

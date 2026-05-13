@@ -13,6 +13,7 @@ System ewidencji sprzętu IT zbudowany na FastAPI. Umożliwia zarządzanie sprz�
 - Paginacja, filtrowanie i wyszukiwanie na wszystkich listach
 - Sesyjne komunikaty flash i ochrona CSRF
 - Interfejs w Material Design 3 (dark mode)
+- Przełącznik języka PL/EN — preferencja przechowywana w ciasteczku
 
 ## Wymagania
 
@@ -108,6 +109,7 @@ app/
 ├── auth.py          # Haszowanie haseł, CSRF, autentykacja
 ├── deps.py          # Zależności FastAPI (login_required, ctx)
 ├── flash.py         # Komunikaty flash przez sesję
+├── i18n.py          # Słowniki tłumaczeń PL/EN i context processor
 ├── pagination.py    # Paginacja zapytań
 ├── label_pdf.py     # Generowanie etykiet PDF z QR
 └── routers/
@@ -151,6 +153,7 @@ IT asset management system built with FastAPI. Manage hardware, licenses and use
 - Pagination, filtering and search on all list views
 - Session flash messages and CSRF protection
 - Material Design 3 interface (dark mode)
+- PL/EN language switcher — preference stored in a cookie
 
 ## Requirements
 
@@ -240,6 +243,7 @@ app/
 ├── auth.py          # Password hashing, CSRF, authentication
 ├── deps.py          # FastAPI dependencies (login_required, ctx)
 ├── flash.py         # Session flash messages
+├── i18n.py          # PL/EN translation dictionaries and context processor
 ├── pagination.py    # Query pagination
 ├── label_pdf.py     # PDF label generation with QR codes
 └── routers/

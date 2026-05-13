@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl" data-theme="dark">
+<html lang="{{ lang }}" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -270,6 +270,12 @@
     .empty-state .material-icons-round { font-size: 64px; opacity: .3; margin-bottom: 16px; display: flex; justify-content: center; align-self: stretch; }
     .empty-state h3 { font-size: 18px; font-weight: 400; margin-bottom: 8px; }
 
+    /* ── Language switcher ── */
+    .lang-switcher { display: flex; gap: 2px; padding: 3px; background: var(--md-surface-container-high); border-radius: var(--radius-full); margin-bottom: 8px; }
+    .lang-btn { font-size: 10px; font-weight: 700; letter-spacing: .5px; padding: 4px 7px; border-radius: var(--radius-full); color: var(--md-on-surface-variant); text-decoration: none; transition: background .2s, color .2s; }
+    .lang-btn.active { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+    .lang-btn:hover { background: rgba(202,196,208,.12); text-decoration: none; color: var(--md-on-surface); }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -362,36 +368,45 @@
     <img src="{{ url_for('static', path='img/logo.svg') }}" alt="VanillaTracker">
   </div>
 
-  <a href="{{ url_for('dashboard') }}" class="nav-item {% if active == 'dashboard' %}active{% endif %}" title="Dashboard">
+  <a href="{{ url_for('dashboard') }}" class="nav-item {% if active == 'dashboard' %}active{% endif %}" title="{{ t.nav_home }}">
     <span class="material-icons-round">dashboard</span>
-    <span class="label">Home</span>
+    <span class="label">{{ t.nav_home }}</span>
   </a>
-  <a href="{{ url_for('asset-list') }}" class="nav-item {% if active == 'assets' %}active{% endif %}" title="Sprzęt">
+  <a href="{{ url_for('asset-list') }}" class="nav-item {% if active == 'assets' %}active{% endif %}" title="{{ t.nav_assets }}">
     <span class="material-icons-round">devices</span>
-    <span class="label">Sprzęt</span>
+    <span class="label">{{ t.nav_assets }}</span>
   </a>
-  <a href="{{ url_for('license-list') }}" class="nav-item {% if active == 'licenses' %}active{% endif %}" title="Licencje">
+  <a href="{{ url_for('license-list') }}" class="nav-item {% if active == 'licenses' %}active{% endif %}" title="{{ t.nav_licenses }}">
     <span class="material-icons-round">key</span>
-    <span class="label">Licencje</span>
+    <span class="label">{{ t.nav_licenses }}</span>
   </a>
-  <a href="{{ url_for('user-list') }}" class="nav-item {% if active == 'users' %}active{% endif %}" title="Użytkownicy">
+  <a href="{{ url_for('user-list') }}" class="nav-item {% if active == 'users' %}active{% endif %}" title="{{ t.nav_users }}">
     <span class="material-icons-round">group</span>
-    <span class="label">Ludzie</span>
+    <span class="label">{{ t.nav_users }}</span>
   </a>
-  <a href="{{ url_for('category-list') }}" class="nav-item {% if active == 'categories' %}active{% endif %}" title="Typy">
+  <a href="{{ url_for('category-list') }}" class="nav-item {% if active == 'categories' %}active{% endif %}" title="{{ t.nav_types }}">
     <span class="material-icons-round">category</span>
-    <span class="label">Typy</span>
+    <span class="label">{{ t.nav_types }}</span>
   </a>
 
   <div class="nav-spacer"></div>
 
+  <div class="lang-switcher">
+    <a href="/lang/pl/?next={{ request.url.path }}" class="lang-btn {% if lang == 'pl' %}active{% endif %}">PL</a>
+    <a href="/lang/en/?next={{ request.url.path }}" class="lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
+  </div>
+
   <form method="post" action="{{ url_for('logout') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <button type="submit" class="nav-item" title="Wyloguj">
+    <button type="submit" class="nav-item" title="{{ t.nav_logout }}">
       <span class="material-icons-round">logout</span>
-      <span class="label">Wyloguj</span>
+      <span class="label">{{ t.nav_logout }}</span>
     </button>
   </form>
+
+  <div style="font-size:9px;color:var(--md-on-surface-variant);opacity:.35;text-align:center;padding:8px 4px 4px;letter-spacing:.3px;line-height:1.4">
+    © {{ date_type.today().year }}<br>Kamil Kowalczyk
+  </div>
 </nav>
 
 <!-- Main Content -->
@@ -434,23 +449,23 @@
 <nav class="bottom-nav">
   <a href="{{ url_for('dashboard') }}" class="bottom-nav-item {% if active == 'dashboard' %}active{% endif %}">
     <div class="nav-pill"><span class="material-icons-round">dashboard</span></div>
-    <span class="bnav-label">Home</span>
+    <span class="bnav-label">{{ t.nav_home }}</span>
   </a>
   <a href="{{ url_for('asset-list') }}" class="bottom-nav-item {% if active == 'assets' %}active{% endif %}">
     <div class="nav-pill"><span class="material-icons-round">devices</span></div>
-    <span class="bnav-label">Sprzęt</span>
+    <span class="bnav-label">{{ t.nav_assets }}</span>
   </a>
   <a href="{{ url_for('license-list') }}" class="bottom-nav-item {% if active == 'licenses' %}active{% endif %}">
     <div class="nav-pill"><span class="material-icons-round">key</span></div>
-    <span class="bnav-label">Licencje</span>
+    <span class="bnav-label">{{ t.nav_licenses }}</span>
   </a>
   <a href="{{ url_for('user-list') }}" class="bottom-nav-item {% if active == 'users' %}active{% endif %}">
     <div class="nav-pill"><span class="material-icons-round">group</span></div>
-    <span class="bnav-label">Ludzie</span>
+    <span class="bnav-label">{{ t.nav_users }}</span>
   </a>
   <a href="{{ url_for('category-list') }}" class="bottom-nav-item {% if active == 'categories' %}active{% endif %}">
     <div class="nav-pill"><span class="material-icons-round">category</span></div>
-    <span class="bnav-label">Typy</span>
+    <span class="bnav-label">{{ t.nav_types }}</span>
   </a>
 </nav>
 

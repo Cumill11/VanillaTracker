@@ -10,7 +10,7 @@ from app.database import get_db
 from app.auth import verify_csrf
 from app.deps import ctx, login_required
 from app.flash import add_message
-from app.models import Asset, AssetCounter, AssetHistory, License, Settings, User
+from app.models import AssetCounter, AssetHistory, License, Settings, User
 from app.pagination import paginate
 
 router = APIRouter(prefix="/licenses")

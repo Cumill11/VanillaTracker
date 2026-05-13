@@ -5,13 +5,13 @@
 
 {% block top_actions %}
 <a href="/licenses/{{ license.id }}/edit/" class="btn btn-tonal btn-sm">
-  <span class="material-icons-round">edit</span> Edytuj
+  <span class="material-icons-round">edit</span> {{ t.btn_edit }}
 </a>
 {% endblock %}
 
 {% block breadcrumb %}
 <div class="breadcrumb">
-  <a href="{{ url_for('license-list') }}">Licencje</a>
+  <a href="{{ url_for('license-list') }}">{{ t.nav_licenses }}</a>
   <span class="sep material-icons-round">chevron_right</span>
   <span class="current">{{ license.asset_tag }}</span>
 </div>
@@ -31,18 +31,18 @@
             <div style="font-size:24px;font-weight:400;color:var(--md-on-surface)">{{ license.name }}</div>
             <div class="flex items-center gap-8" style="margin-top:4px">
               <span class="asset-tag" style="background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)">{{ license.asset_tag }}</span>
-              {{ license.status|status_chip }}
+              {{ license.status|status_chip(t.get('status_' + license.status, license.status)) }}
             </div>
           </div>
         </div>
 
         <div class="field-grid">
           <div class="detail-field">
-            <span class="field-label">Dostawca</span>
+            <span class="field-label">{{ t.lic_vendor }}</span>
             <span class="field-value">{{ license.vendor or '—' }}</span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Stanowiska</span>
+            <span class="field-label">{{ t.lic_col_seats }}</span>
             <span class="field-value">
               {{ license.seats_used }}/{{ license.seats }}
               {% set pct = (license.seats_used / license.seats * 100)|int if license.seats else 0 %}
@@ -52,26 +52,26 @@
             </span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Data zakupu</span>
+            <span class="field-label">{{ t.lic_purchase_date }}</span>
             <span class="field-value">{{ license.purchase_date|date_fmt if license.purchase_date else '—' }}</span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Data wygaśnięcia</span>
+            <span class="field-label">{{ t.lic_expiry_date }}</span>
             <span class="field-value">{{ license.expiry_date|date_fmt if license.expiry_date else '—' }}</span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Cena zakupu</span>
+            <span class="field-label">{{ t.lic_purchase_price }}</span>
             <span class="field-value">{% if license.purchase_price %}{{ license.purchase_price }} PLN{% else %}—{% endif %}</span>
           </div>
           {% if license.license_key %}
           <div class="detail-field" style="grid-column:1/-1">
-            <span class="field-label">Klucz licencji</span>
+            <span class="field-label">{{ t.lic_key }}</span>
             <span class="field-value font-mono text-sm">{{ license.license_key }}</span>
           </div>
           {% endif %}
           {% if license.notes %}
           <div class="detail-field" style="grid-column:1/-1">
-            <span class="field-label">Notatki</span>
+            <span class="field-label">{{ t.lbl_notes }}</span>
             <span class="field-value">{{ license.notes }}</span>
           </div>
           {% endif %}
@@ -83,7 +83,7 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">history</span>
-        <h2>Historia</h2>
+        <h2>{{ t.lbl_history }}</h2>
       </div>
       <div class="card-body">
         <div class="timeline">
@@ -93,9 +93,9 @@
               <span class="material-icons-round">edit_note</span>
             </div>
             <div class="timeline-content">
-              <div class="timeline-title">{{ h.get_action_display() }}</div>
+              <div class="timeline-title">{{ t.get('action_' + h.action, h.action) }}</div>
               <div class="timeline-meta">{{ h.created_at|date_fmt('%d.%m.%Y %H:%M') }}
-                {% if h.performed_by %} · przez {{ h.performed_by.get_full_name() }}{% endif %}
+                {% if h.performed_by %} · {{ t.lbl_by }} {{ h.performed_by.get_full_name() }}{% endif %}
               </div>
               {% if h.note %}<div class="text-sm text-muted" style="margin-top:2px">{{ h.note }}</div>{% endif %}
             </div>
@@ -103,7 +103,7 @@
           {% else %}
           <div class="empty-state" style="padding:20px">
             <span class="material-icons-round" style="font-size:32px">history</span>
-            <p>Brak historii</p>
+            <p>{{ t.lbl_no_history }}</p>
           </div>
           {% endfor %}
         </div>
@@ -117,7 +117,7 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">group</span>
-        <h2>Przypisani użytkownicy</h2>
+        <h2>{{ t.lic_assigned_users }}</h2>
       </div>
       <div class="card-body">
         <form method="post" action="/licenses/{{ license.id }}/assign/">
@@ -132,7 +132,7 @@
             {% endfor %}
           </div>
           <button type="submit" class="btn btn-filled" style="width:100%">
-            <span class="material-icons-round">save</span> Zapisz przypisanie
+            <span class="material-icons-round">save</span> {{ t.lic_save_assignment }}
           </button>
         </form>
       </div>
@@ -141,22 +141,22 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">info</span>
-        <h2>Informacje</h2>
+        <h2>{{ t.lbl_info }}</h2>
       </div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
         <div class="detail-field">
-          <span class="field-label">Dodano</span>
+          <span class="field-label">{{ t.lbl_created }}</span>
           <span class="field-value text-sm">{{ license.created_at|date_fmt('%d.%m.%Y %H:%M') if license.created_at else '—' }}</span>
         </div>
         <div class="detail-field">
-          <span class="field-label">Zaktualizowano</span>
+          <span class="field-label">{{ t.lbl_updated }}</span>
           <span class="field-value text-sm">{{ license.updated_at|date_fmt('%d.%m.%Y %H:%M') if license.updated_at else '—' }}</span>
         </div>
       </div>
     </div>
 
     <a href="/licenses/{{ license.id }}/delete/" class="btn btn-error" style="width:100%;justify-content:center">
-      <span class="material-icons-round">delete</span> Usuń licencję
+      <span class="material-icons-round">delete</span> {{ t.lic_delete }}
     </a>
   </div>
 </div>

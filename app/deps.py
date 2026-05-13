@@ -1,5 +1,4 @@
 from fastapi import Request, Depends
-from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.auth import get_current_user, csrf_token as _csrf_token
@@ -30,10 +29,6 @@ def ctx(request: Request, db: Session = Depends(get_db)) -> dict:
         "csrf_token": _csrf_token(request),
         "active": active,
     }
-
-
-def current_user(request: Request, db: Session = Depends(get_db)) -> User | None:
-    return get_current_user(request, db)
 
 
 def login_required(request: Request, db: Session = Depends(get_db)) -> User:

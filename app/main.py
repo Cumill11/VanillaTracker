@@ -8,6 +8,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from app.i18n import lang_context_processor
 
 load_dotenv()
 
@@ -67,25 +68,28 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 # Jinja2 templates
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+templates = Jinja2Templates(
+    directory=os.path.join(BASE_DIR, "templates"),
+    context_processors=[lang_context_processor],
+)
 templates.env.autoescape = True
 
 
 # ── Jinja2 filters & globals ──────────────────────────────────────────────────
 
-def status_chip(status: str) -> Markup:
+def status_chip(status: str, label: str = "") -> Markup:
     colors = {
         "available": "#4CAF50", "assigned": "#2196F3",
         "maintenance": "#FF9800", "retired": "#F44336",
         "active": "#4CAF50", "expired": "#F44336", "inactive": "#9E9E9E",
     }
-    labels = {
+    fallback_labels = {
         "available": "Dostępny", "assigned": "Przypisany",
         "maintenance": "Serwis", "retired": "Wycofany",
         "active": "Aktywna", "expired": "Wygasła", "inactive": "Nieaktywna",
     }
     c = colors.get(status, "#9E9E9E")
-    l = labels.get(status, status)
+    l = label if label else fallback_labels.get(status, status)
     return Markup(
         f'<span class="status-chip" style="background:{c}20;color:{c};border:1px solid {c}40">'
         f'{l}</span>'
@@ -129,6 +133,20 @@ templates.env.globals["date_type"] = date_type
 # Share templates instance with all routers
 for router_module in [auth, dashboard, assets, licenses, users, categories, setup_module]:
     router_module.templates = templates
+
+
+# ── Language switcher ─────────────────────────────────────────────────────────
+
+@app.get("/lang/{code}/")
+async def set_lang(code: str, next: str = "/"):
+    if code not in ("pl", "en"):
+        code = "pl"
+    from urllib.parse import urlparse
+    parsed = urlparse(next)
+    safe_next = next if (not parsed.scheme and not parsed.netloc) else "/"
+    response = RedirectResponse(safe_next or "/", status_code=302)
+    response.set_cookie("lang", code, max_age=365 * 24 * 3600, httponly=True, samesite="strict")
+    return response
 
 
 # ── Exception handler for login redirect ─────────────────────────────────────

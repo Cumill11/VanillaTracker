@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Użytkownicy{% endblock %}
-{% block page_title %}Użytkownicy{% endblock %}
+{% block title %}{{ t.users_title }}{% endblock %}
+{% block page_title %}{{ t.users_title }}{% endblock %}
 
 {% block top_actions %}
 <a href="{{ url_for('user-create') }}" class="btn btn-filled btn-sm">
-  <span class="material-icons-round">person_add</span> Dodaj
+  <span class="material-icons-round">person_add</span> {{ t.users_add }}
 </a>
 {% endblock %}
 
@@ -14,17 +14,17 @@
   <div class="filters-bar">
     <div class="search-field">
       <span class="material-icons-round">search</span>
-      <input type="text" name="q" value="{{ current_q }}" placeholder="Szukaj..." oninput="this.form.submit()">
+      <input type="text" name="q" value="{{ current_q }}" placeholder="{{ t.lbl_search }}" oninput="this.form.submit()">
     </div>
     <select name="department" class="md3-select" style="width:auto" onchange="this.form.submit()">
-      <option value="">Wszystkie działy</option>
+      <option value="">{{ t.lbl_all_departments }}</option>
       {% for dept in departments %}
       <option value="{{ dept.id }}" {% if current_dept == dept.id|string %}selected{% endif %}>{{ dept.name }}</option>
       {% endfor %}
     </select>
     <select name="active" class="md3-select" style="width:auto" onchange="this.form.submit()">
-      <option value="1" {% if current_active == '1' %}selected{% endif %}>Aktywni</option>
-      <option value="" {% if current_active == '' %}selected{% endif %}>Wszyscy</option>
+      <option value="1" {% if current_active == '1' %}selected{% endif %}>{{ t.users_filter_active }}</option>
+      <option value="" {% if current_active == '' %}selected{% endif %}>{{ t.users_filter_all }}</option>
     </select>
   </div>
 </form>
@@ -34,11 +34,11 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>Imię i nazwisko</th>
-          <th class="col-hide-sm">Dział</th>
-          <th class="col-hide-sm">Email</th>
-          <th class="col-hide-sm">Telefon</th>
-          <th>Sprzęt</th>
+          <th>{{ t.users_col_name }}</th>
+          <th class="col-hide-sm">{{ t.users_col_dept }}</th>
+          <th class="col-hide-sm">{{ t.users_col_email }}</th>
+          <th class="col-hide-sm">{{ t.users_col_phone }}</th>
+          <th>{{ t.users_col_assets }}</th>
           <th></th>
         </tr>
       </thead>
@@ -50,7 +50,7 @@
               <div class="avatar">{{ u.get_initials() }}</div>
               <div>
                 <a href="/users/{{ u.id }}/" style="color:var(--md-on-surface)">{{ u.get_full_name() }}</a>
-                {% if not u.is_active %}<span class="text-xs text-muted"> (nieaktywny)</span>{% endif %}
+                {% if not u.is_active %}<span class="text-xs text-muted"> {{ t.users_inactive }}</span>{% endif %}
               </div>
             </div>
           </td>
@@ -63,7 +63,7 @@
             {% else %}—{% endif %}
           </td>
           <td>
-            <a href="/users/{{ u.id }}/edit/" class="btn-icon" title="Edytuj">
+            <a href="/users/{{ u.id }}/edit/" class="btn-icon" title="{{ t.btn_edit }}">
               <span class="material-icons-round">edit</span>
             </a>
           </td>
@@ -72,8 +72,8 @@
         <tr><td colspan="6">
           <div class="empty-state">
             <span class="material-icons-round">group</span>
-            <h3>Brak użytkowników</h3>
-            <p><a href="{{ url_for('user-create') }}">Dodaj pierwszego użytkownika</a></p>
+            <h3>{{ t.users_empty }}</h3>
+            <p><a href="{{ url_for('user-create') }}">{{ t.users_add_first }}</a></p>
           </div>
         </td></tr>
         {% endfor %}
@@ -95,7 +95,7 @@
     {% else %}
     <div class="empty-state">
       <span class="material-icons-round">group</span>
-      <h3>Brak użytkowników</h3>
+      <h3>{{ t.users_empty }}</h3>
     </div>
     {% endfor %}
   </div>

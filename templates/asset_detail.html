@@ -5,16 +5,16 @@
 
 {% block top_actions %}
 <a href="/assets/{{ asset.id }}/label/" class="btn btn-outlined btn-sm" target="_blank">
-  <span class="material-icons-round">label</span> Etykieta PDF
+  <span class="material-icons-round">label</span> {{ t.asset_label_pdf }}
 </a>
 <a href="/assets/{{ asset.id }}/edit/" class="btn btn-tonal btn-sm">
-  <span class="material-icons-round">edit</span> Edytuj
+  <span class="material-icons-round">edit</span> {{ t.btn_edit }}
 </a>
 {% endblock %}
 
 {% block breadcrumb %}
 <div class="breadcrumb">
-  <a href="{{ url_for('asset-list') }}">Sprzęt</a>
+  <a href="{{ url_for('asset-list') }}">{{ t.nav_assets }}</a>
   <span class="sep material-icons-round">chevron_right</span>
   <span class="current">{{ asset.asset_tag }}</span>
 </div>
@@ -35,14 +35,14 @@
             <div style="font-size:24px;font-weight:400;color:var(--md-on-surface)">{{ asset.name }}</div>
             <div class="flex items-center gap-8" style="margin-top:4px">
               <span class="asset-tag">{{ asset.asset_tag }}</span>
-              {{ asset.status|status_chip }}
+              {{ asset.status|status_chip(t.get('status_' + asset.status, asset.status)) }}
             </div>
           </div>
         </div>
 
         <div class="field-grid">
           <div class="detail-field">
-            <span class="field-label">Kategoria</span>
+            <span class="field-label">{{ t.asset_category }}</span>
             <span class="field-value category-badge">
               {% if asset.category %}
               <span class="material-icons-round">{{ asset.category.slug|category_icon }}</span>
@@ -51,67 +51,67 @@
             </span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Producent</span>
+            <span class="field-label">{{ t.asset_mfr }}</span>
             <span class="field-value">{{ asset.manufacturer or '—' }}</span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Model</span>
+            <span class="field-label">{{ t.asset_model }}</span>
             <span class="field-value">{{ asset.model_name or '—' }}</span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Numer seryjny</span>
+            <span class="field-label">{{ t.asset_serial }}</span>
             <span class="field-value font-mono">{{ asset.serial_number or '—' }}</span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Data zakupu</span>
+            <span class="field-label">{{ t.asset_purchase_date }}</span>
             <span class="field-value">{{ asset.purchase_date|date_fmt if asset.purchase_date else '—' }}</span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Cena zakupu</span>
+            <span class="field-label">{{ t.asset_purchase_price }}</span>
             <span class="field-value">{% if asset.purchase_price %}{{ asset.purchase_price }} PLN{% else %}—{% endif %}</span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Koniec gwarancji</span>
+            <span class="field-label">{{ t.asset_warranty }}</span>
             <span class="field-value">{{ asset.warranty_expiry|date_fmt if asset.warranty_expiry else '—' }}</span>
           </div>
           <div class="detail-field">
-            <span class="field-label">Lokalizacja</span>
+            <span class="field-label">{{ t.asset_location }}</span>
             <span class="field-value">{{ asset.location or '—' }}</span>
           </div>
           {% if asset.notes %}
           <div class="detail-field" style="grid-column:1/-1">
-            <span class="field-label">Notatki</span>
+            <span class="field-label">{{ t.lbl_notes }}</span>
             <span class="field-value">{{ asset.notes }}</span>
           </div>
           {% endif %}
 
           {% if asset.cpu %}
           <div class="detail-field">
-            <span class="field-label">Procesor</span>
+            <span class="field-label">{{ t.asset_cpu }}</span>
             <span class="field-value">{{ asset.cpu }}</span>
           </div>
           {% endif %}
           {% if asset.ram %}
           <div class="detail-field">
-            <span class="field-label">RAM</span>
+            <span class="field-label">{{ t.asset_ram }}</span>
             <span class="field-value">{{ asset.ram }}</span>
           </div>
           {% endif %}
           {% if asset.storage %}
           <div class="detail-field">
-            <span class="field-label">Dysk</span>
+            <span class="field-label">{{ t.asset_storage }}</span>
             <span class="field-value">{{ asset.storage }}</span>
           </div>
           {% endif %}
           {% if asset.phone_number %}
           <div class="detail-field">
-            <span class="field-label">Numer telefonu</span>
+            <span class="field-label">{{ t.asset_phone_number }}</span>
             <span class="field-value">{{ asset.phone_number }}</span>
           </div>
           {% endif %}
           {% if asset.ink_type %}
           <div class="detail-field" style="grid-column:1/-1">
-            <span class="field-label">Typ tuszu/tonera</span>
+            <span class="field-label">{{ t.asset_ink_type }}</span>
             <span class="field-value">{{ asset.ink_type }}</span>
           </div>
           {% endif %}
@@ -123,7 +123,7 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">history</span>
-        <h2>Historia</h2>
+        <h2>{{ t.lbl_history }}</h2>
       </div>
       <div class="card-body">
         <div class="timeline">
@@ -136,12 +136,12 @@
               {% else %}<span class="material-icons-round">edit_note</span>{% endif %}
             </div>
             <div class="timeline-content">
-              <div class="timeline-title">{{ h.get_action_display() }}
+              <div class="timeline-title">{{ t.get('action_' + h.action, h.action) }}
                 {% if h.user %} → <a href="/users/{{ h.user.id }}/">{{ h.user.get_full_name() }}</a>{% endif %}
               </div>
               <div class="timeline-meta">
                 {{ h.created_at|date_fmt('%d.%m.%Y %H:%M') }}
-                {% if h.performed_by %} · przez {{ h.performed_by.get_full_name() }}{% endif %}
+                {% if h.performed_by %} · {{ t.lbl_by }} {{ h.performed_by.get_full_name() }}{% endif %}
               </div>
               {% if h.note %}<div class="text-sm text-muted" style="margin-top:2px">{{ h.note }}</div>{% endif %}
             </div>
@@ -149,7 +149,7 @@
           {% else %}
           <div class="empty-state" style="padding:20px">
             <span class="material-icons-round" style="font-size:32px">history</span>
-            <p>Brak historii</p>
+            <p>{{ t.lbl_no_history }}</p>
           </div>
           {% endfor %}
         </div>
@@ -163,7 +163,7 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">person</span>
-        <h2>Przypisanie</h2>
+        <h2>{{ t.asset_assign_title }}</h2>
       </div>
       <div class="card-body">
         {% if asset.assigned_to %}
@@ -175,49 +175,49 @@
             </div>
             <div class="text-sm text-muted">{{ asset.assigned_to.email }}</div>
             {% if asset.assigned_date %}
-            <div class="text-xs text-muted">od {{ asset.assigned_date|date_fmt }}</div>
+            <div class="text-xs text-muted">{{ t.asset_since }} {{ asset.assigned_date|date_fmt }}</div>
             {% endif %}
           </div>
         </div>
         <form method="post" action="/assets/{{ asset.id }}/return/">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <div class="form-group mb-16">
-            <label>Notatka</label>
+            <label>{{ t.asset_note }}</label>
             <textarea name="note" class="md3-input" rows="2"></textarea>
           </div>
           <button type="submit" class="btn btn-outlined" style="width:100%">
-            <span class="material-icons-round">undo</span> Zwróć sprzęt
+            <span class="material-icons-round">undo</span> {{ t.asset_return_btn }}
           </button>
         </form>
 
         {% else %}
-        <p class="text-muted text-sm mb-16">Sprzęt nie jest przypisany.</p>
+        <p class="text-muted text-sm mb-16">{{ t.asset_not_assigned }}</p>
         {% if asset.status == 'available' %}
         <form method="post" action="/assets/{{ asset.id }}/assign/">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <div class="form-group mb-16">
-            <label>Użytkownik</label>
+            <label>{{ t.asset_user }}</label>
             <select name="assign_user_id" class="md3-select">
-              <option value="">— wybierz —</option>
+              <option value="">{{ t.lbl_select }}</option>
               {% for u in users %}
               <option value="{{ u.id }}">{{ u.get_full_name() }}</option>
               {% endfor %}
             </select>
           </div>
           <div class="form-group mb-16">
-            <label>Data przypisania</label>
+            <label>{{ t.asset_assign_date }}</label>
             <input type="date" name="assigned_date" class="md3-input" value="{{ date_type.today().isoformat() }}">
           </div>
           <div class="form-group mb-16">
-            <label>Notatka</label>
+            <label>{{ t.asset_note }}</label>
             <textarea name="note" class="md3-input" rows="2"></textarea>
           </div>
           <button type="submit" class="btn btn-filled" style="width:100%">
-            <span class="material-icons-round">person_add</span> Przypisz
+            <span class="material-icons-round">person_add</span> {{ t.asset_assign_btn }}
           </button>
         </form>
         {% else %}
-        <p class="text-muted text-xs">Zmień status na "Dostępny" aby przypisać.</p>
+        <p class="text-muted text-xs">{{ t.asset_change_status_hint }}</p>
         {% endif %}
         {% endif %}
       </div>
@@ -227,22 +227,22 @@
     <div class="card">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">info</span>
-        <h2>Informacje</h2>
+        <h2>{{ t.lbl_info }}</h2>
       </div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
         <div class="detail-field">
-          <span class="field-label">Dodano</span>
+          <span class="field-label">{{ t.lbl_created }}</span>
           <span class="field-value text-sm">{{ asset.created_at|date_fmt('%d.%m.%Y %H:%M') if asset.created_at else '—' }}</span>
         </div>
         <div class="detail-field">
-          <span class="field-label">Zaktualizowano</span>
+          <span class="field-label">{{ t.lbl_updated }}</span>
           <span class="field-value text-sm">{{ asset.updated_at|date_fmt('%d.%m.%Y %H:%M') if asset.updated_at else '—' }}</span>
         </div>
       </div>
     </div>
 
     <a href="/assets/{{ asset.id }}/delete/" class="btn btn-error" style="width:100%;justify-content:center">
-      <span class="material-icons-round">delete</span> Usuń sprzęt
+      <span class="material-icons-round">delete</span> {{ t.asset_delete }}
     </a>
   </div>
 </div>

@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
-{% block page_title %}{{ title }}{% endblock %}
+{% block title %}{{ t.dept_form_edit if object else t.dept_form_new }}{% endblock %}
+{% block page_title %}{{ t.dept_form_edit if object else t.dept_form_new }}{% endblock %}
 
 {% block breadcrumb %}
 <div class="breadcrumb">
-  <a href="{{ url_for('category-list') }}">Typy</a>
+  <a href="{{ url_for('category-list') }}">{{ t.nav_types }}</a>
   <span class="sep material-icons-round">chevron_right</span>
-  <span class="current">{{ title }}</span>
+  <span class="current">{{ t.dept_form_edit if object else t.dept_form_new }}</span>
 </div>
 {% endblock %}
 
@@ -19,11 +19,11 @@
     <div class="card mb-20">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-secondary)">apartment</span>
-        <h2>Dane działu</h2>
+        <h2>{{ t.dept_form_title }}</h2>
       </div>
       <div class="card-body">
         <div class="form-group">
-          <label>Nazwa<span class="req">*</span></label>
+          <label>{{ t.lbl_name }}<span class="req">*</span></label>
           <input type="text" name="name" class="md3-input" value="{{ form_data.name or '' }}" autofocus>
           {% if errors.name %}<ul class="errorlist">{% for e in errors.name %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
@@ -32,9 +32,9 @@
 
     <div class="flex gap-12">
       <button type="submit" class="btn btn-filled">
-        <span class="material-icons-round">save</span> Zapisz
+        <span class="material-icons-round">save</span> {{ t.btn_save }}
       </button>
-      <a href="{{ url_for('category-list') }}" class="btn btn-outlined">Anuluj</a>
+      <a href="{{ url_for('category-list') }}" class="btn btn-outlined">{{ t.btn_cancel }}</a>
     </div>
   </form>
 </div>

@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Typy{% endblock %}
-{% block page_title %}Typy{% endblock %}
+{% block title %}{{ t.types_title }}{% endblock %}
+{% block page_title %}{{ t.types_title }}{% endblock %}
 
 {% block content %}
 <div class="types-grid">
 
-  <!-- Kategorie sprzętu -->
+  <!-- Asset categories -->
   <div class="card">
     <div class="card-header">
       <span class="material-icons-round" style="color:var(--md-primary)">category</span>
-      <h2>Kategorie sprzętu</h2>
+      <h2>{{ t.types_categories }}</h2>
     </div>
     {% if categories %}
     <div class="card-body" style="padding:0">
@@ -30,17 +30,17 @@
     {% else %}
     <div class="empty-state" style="padding:40px 24px">
       <span class="material-icons-round">category</span>
-      <h3>Brak kategorii</h3>
+      <h3>{{ t.types_no_categories }}</h3>
     </div>
     {% endif %}
   </div>
 
-  <!-- Działy -->
+  <!-- Departments -->
   <div class="card">
     <div class="card-header">
       <span class="material-icons-round" style="color:var(--md-secondary)">apartment</span>
-      <h2>Działy</h2>
-      <a href="{{ url_for('department-create') }}" class="btn-icon" title="Dodaj dział">
+      <h2>{{ t.types_depts }}</h2>
+      <a href="{{ url_for('department-create') }}" class="btn-icon" title="{{ t.types_add_dept }}">
         <span class="material-icons-round" style="color:var(--md-secondary)">add</span>
       </a>
     </div>
@@ -55,7 +55,7 @@
           <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">{{ dept.name }}</div>
         </div>
         <a href="{{ url_for('user-list') }}?department={{ dept.id }}" class="asset-tag" style="font-size:12px;flex-shrink:0;background:var(--md-secondary-container);color:var(--md-on-secondary-container)">{{ dept.user_count }}</a>
-        <a href="/departments/{{ dept.id }}/edit/" class="btn-icon" title="Edytuj">
+        <a href="/departments/{{ dept.id }}/edit/" class="btn-icon" title="{{ t.btn_edit }}">
           <span class="material-icons-round" style="font-size:18px">edit</span>
         </a>
       </div>
@@ -64,8 +64,8 @@
     {% else %}
     <div class="empty-state" style="padding:40px 24px">
       <span class="material-icons-round">apartment</span>
-      <h3>Brak działów</h3>
-      <p><a href="{{ url_for('department-create') }}">Dodaj dział</a></p>
+      <h3>{{ t.types_no_depts }}</h3>
+      <p><a href="{{ url_for('department-create') }}">{{ t.types_add_dept }}</a></p>
     </div>
     {% endif %}
   </div>

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Licencje{% endblock %}
-{% block page_title %}Licencje{% endblock %}
+{% block title %}{{ t.licenses_title }}{% endblock %}
+{% block page_title %}{{ t.licenses_title }}{% endblock %}
 
 {% block top_actions %}
 <a href="{{ url_for('license-create') }}" class="btn btn-filled btn-sm">
-  <span class="material-icons-round">add</span> Dodaj licencję
+  <span class="material-icons-round">add</span> {{ t.licenses_add }}
 </a>
 {% endblock %}
 
@@ -14,12 +14,12 @@
   <div class="filters-bar">
     <div class="search-field">
       <span class="material-icons-round">search</span>
-      <input type="text" name="q" value="{{ current_q }}" placeholder="Szukaj..." oninput="this.form.submit()">
+      <input type="text" name="q" value="{{ current_q }}" placeholder="{{ t.lbl_search }}" oninput="this.form.submit()">
     </div>
     <select name="status" class="md3-select" style="width:auto" onchange="this.form.submit()">
-      <option value="">Wszystkie statusy</option>
+      <option value="">{{ t.lbl_all_statuses }}</option>
       {% for val, label in status_choices %}
-      <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+      <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ t.get('status_' + val, label) }}</option>
       {% endfor %}
     </select>
   </div>
@@ -30,12 +30,12 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>Tag</th>
-          <th>Nazwa</th>
-          <th class="col-hide-sm">Dostawca</th>
-          <th>Status</th>
-          <th class="col-hide-sm">Stanowiska</th>
-          <th class="col-hide-sm">Wygasa</th>
+          <th>{{ t.assets_col_tag }}</th>
+          <th>{{ t.lbl_name }}</th>
+          <th class="col-hide-sm">{{ t.lic_col_vendor }}</th>
+          <th>{{ t.lbl_status }}</th>
+          <th class="col-hide-sm">{{ t.lic_col_seats }}</th>
+          <th class="col-hide-sm">{{ t.lic_col_expires }}</th>
           <th></th>
         </tr>
       </thead>
@@ -45,7 +45,7 @@
           <td><a href="/licenses/{{ lic.id }}/" class="asset-tag" style="background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)">{{ lic.asset_tag }}</a></td>
           <td><a href="/licenses/{{ lic.id }}/" style="color:var(--md-on-surface)">{{ lic.name }}</a></td>
           <td class="col-hide-sm">{{ lic.vendor or '—' }}</td>
-          <td>{{ lic.status|status_chip }}</td>
+          <td>{{ lic.status|status_chip(t.get('status_' + lic.status, lic.status)) }}</td>
           <td class="col-hide-sm">
             {% set used = lic.seats_used %}
             {% set pct = (used / lic.seats * 100)|int if lic.seats else 0 %}
@@ -56,7 +56,7 @@
           </td>
           <td class="col-hide-sm">{{ lic.expiry_date|date_fmt if lic.expiry_date else '—' }}</td>
           <td>
-            <a href="/licenses/{{ lic.id }}/edit/" class="btn-icon" title="Edytuj">
+            <a href="/licenses/{{ lic.id }}/edit/" class="btn-icon" title="{{ t.btn_edit }}">
               <span class="material-icons-round">edit</span>
             </a>
           </td>
@@ -65,8 +65,8 @@
         <tr><td colspan="7">
           <div class="empty-state">
             <span class="material-icons-round">key</span>
-            <h3>Brak licencji</h3>
-            <p><a href="{{ url_for('license-create') }}">Dodaj pierwszą licencję</a></p>
+            <h3>{{ t.lic_empty }}</h3>
+            <p><a href="{{ url_for('license-create') }}">{{ t.lic_add_first }}</a></p>
           </div>
         </td></tr>
         {% endfor %}
@@ -79,15 +79,15 @@
     <a href="/licenses/{{ lic.id }}/" class="mob-list-item">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
         <span class="asset-tag" style="background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)">{{ lic.asset_tag }}</span>
-        {{ lic.status|status_chip }}
+        {{ lic.status|status_chip(t.get('status_' + lic.status, lic.status)) }}
       </div>
       <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">{{ lic.name }}</div>
-      <div class="text-sm text-muted">{{ lic.vendor or '' }} · {{ lic.seats_used }}/{{ lic.seats }} stanowisk</div>
+      <div class="text-sm text-muted">{{ lic.vendor or '' }} · {{ lic.seats_used }}/{{ lic.seats }} {{ t.lic_col_seats|lower }}</div>
     </a>
     {% else %}
     <div class="empty-state">
       <span class="material-icons-round">key</span>
-      <h3>Brak licencji</h3>
+      <h3>{{ t.lic_empty }}</h3>
     </div>
     {% endfor %}
   </div>

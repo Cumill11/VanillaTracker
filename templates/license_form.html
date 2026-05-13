@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
-{% block page_title %}{{ title }}{% endblock %}
+{% block title %}{{ t.lic_form_edit if object else t.lic_form_new }}{% endblock %}
+{% block page_title %}{{ t.lic_form_edit if object else t.lic_form_new }}{% endblock %}
 
 {% block breadcrumb %}
 <div class="breadcrumb">
-  <a href="{{ url_for('license-list') }}">Licencje</a>
+  <a href="{{ url_for('license-list') }}">{{ t.nav_licenses }}</a>
   <span class="sep material-icons-round">chevron_right</span>
   {% if object %}
   <a href="/licenses/{{ object.id }}/">{{ object.asset_tag }}</a>
   <span class="sep material-icons-round">chevron_right</span>
   {% endif %}
-  <span class="current">{{ title }}</span>
+  <span class="current">{{ t.lic_form_edit if object else t.lic_form_new }}</span>
 </div>
 {% endblock %}
 
@@ -23,58 +23,58 @@
     <div class="card mb-20">
       <div class="card-header">
         <span class="material-icons-round" style="color:var(--md-primary)">key</span>
-        <h2>Dane licencji</h2>
+        <h2>{{ t.lic_form_title }}</h2>
       </div>
       <div class="card-body">
         <div class="form-grid">
 
           <div class="form-group" style="grid-column:1/-1">
-            <label>Nazwa<span class="req">*</span></label>
+            <label>{{ t.lbl_name }}<span class="req">*</span></label>
             <input type="text" name="name" class="md3-input" value="{{ form_data.name or '' }}">
             {% if errors.name %}<ul class="errorlist">{% for e in errors.name %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
           </div>
 
           <div class="form-group">
-            <label>Dostawca</label>
+            <label>{{ t.lic_vendor }}</label>
             <input type="text" name="vendor" class="md3-input" value="{{ form_data.vendor or '' }}">
           </div>
 
           <div class="form-group">
-            <label>Liczba stanowisk</label>
+            <label>{{ t.lic_seats }}</label>
             <input type="number" name="seats" class="md3-input" value="{{ form_data.seats or '1' }}" min="1">
           </div>
 
           <div class="form-group" style="grid-column:1/-1">
-            <label>Klucz licencji</label>
+            <label>{{ t.lic_key }}</label>
             <textarea name="license_key" class="md3-input font-mono" rows="2">{{ form_data.license_key or '' }}</textarea>
           </div>
 
           <div class="form-group">
-            <label>Data zakupu</label>
+            <label>{{ t.lic_purchase_date }}</label>
             <input type="date" name="purchase_date" class="md3-input" value="{{ form_data.purchase_date or '' }}">
           </div>
 
           <div class="form-group">
-            <label>Data wygaśnięcia</label>
+            <label>{{ t.lic_expiry_date }}</label>
             <input type="date" name="expiry_date" class="md3-input" value="{{ form_data.expiry_date or '' }}">
           </div>
 
           <div class="form-group">
-            <label>Cena zakupu</label>
+            <label>{{ t.lic_purchase_price }}</label>
             <input type="number" step="0.01" name="purchase_price" class="md3-input" value="{{ form_data.purchase_price or '' }}">
           </div>
 
           <div class="form-group">
-            <label>Status</label>
+            <label>{{ t.lbl_status }}</label>
             <select name="status" class="md3-select">
               {% for val, label in status_choices %}
-              <option value="{{ val }}" {% if (form_data.status or 'active') == val %}selected{% endif %}>{{ label }}</option>
+              <option value="{{ val }}" {% if (form_data.status or 'active') == val %}selected{% endif %}>{{ t.get('status_' + val, label) }}</option>
               {% endfor %}
             </select>
           </div>
 
           <div class="form-group" style="grid-column:1/-1">
-            <label>Notatki</label>
+            <label>{{ t.lbl_notes }}</label>
             <textarea name="notes" class="md3-input" rows="3">{{ form_data.notes or '' }}</textarea>
           </div>
 
@@ -84,10 +84,10 @@
 
     <div class="flex gap-12">
       <button type="submit" class="btn btn-filled">
-        <span class="material-icons-round">save</span> Zapisz
+        <span class="material-icons-round">save</span> {{ t.btn_save }}
       </button>
       <a href="{% if object %}/licenses/{{ object.id }}/{% else %}{{ url_for('license-list') }}{% endif %}" class="btn btn-outlined">
-        Anuluj
+        {{ t.btn_cancel }}
       </a>
     </div>
   </form>

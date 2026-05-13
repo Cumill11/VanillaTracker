@@ -5,7 +5,7 @@
 
 {% block top_actions %}
 <a href="{{ url_for('asset-create') }}" class="btn btn-filled btn-sm">
-  <span class="material-icons-round">add</span> Dodaj sprzęt
+  <span class="material-icons-round">add</span> {{ t.dash_add_asset }}
 </a>
 {% endblock %}
 
@@ -15,32 +15,32 @@
   <a href="{{ url_for('asset-list') }}" class="stat-card" style="text-decoration:none">
     <div class="stat-icon" style="background:rgba(208,188,255,.15)"><span class="material-icons-round" style="color:var(--md-primary)">devices</span></div>
     <div class="stat-number">{{ total_assets }}</div>
-    <div class="stat-label">Wszystkie</div>
+    <div class="stat-label">{{ t.dash_total }}</div>
   </a>
   <a href="{{ url_for('asset-list') }}?status=assigned" class="stat-card" style="text-decoration:none">
     <div class="stat-icon" style="background:rgba(33,150,243,.15)"><span class="material-icons-round" style="color:#2196F3">person</span></div>
     <div class="stat-number">{{ assigned_assets }}</div>
-    <div class="stat-label">Przypisane</div>
+    <div class="stat-label">{{ t.dash_assigned }}</div>
   </a>
   <a href="{{ url_for('asset-list') }}?status=available" class="stat-card" style="text-decoration:none">
     <div class="stat-icon" style="background:rgba(76,175,80,.15)"><span class="material-icons-round" style="color:#4CAF50">check_circle</span></div>
     <div class="stat-number">{{ available_assets }}</div>
-    <div class="stat-label">Dostępne</div>
+    <div class="stat-label">{{ t.dash_available }}</div>
   </a>
   <a href="{{ url_for('asset-list') }}?status=maintenance" class="stat-card" style="text-decoration:none">
     <div class="stat-icon" style="background:rgba(255,152,0,.15)"><span class="material-icons-round" style="color:#FF9800">build</span></div>
     <div class="stat-number">{{ maintenance_assets }}</div>
-    <div class="stat-label">Serwis</div>
+    <div class="stat-label">{{ t.dash_maintenance }}</div>
   </a>
   <a href="{{ url_for('user-list') }}" class="stat-card" style="text-decoration:none">
     <div class="stat-icon" style="background:rgba(204,194,220,.15)"><span class="material-icons-round" style="color:var(--md-secondary)">group</span></div>
     <div class="stat-number">{{ total_users }}</div>
-    <div class="stat-label">Użytkownicy</div>
+    <div class="stat-label">{{ t.dash_users }}</div>
   </a>
   <a href="{{ url_for('license-list') }}" class="stat-card" style="text-decoration:none">
     <div class="stat-icon" style="background:rgba(239,184,200,.15)"><span class="material-icons-round" style="color:var(--md-tertiary)">key</span></div>
     <div class="stat-number">{{ active_licenses }}/{{ total_licenses }}</div>
-    <div class="stat-label">Licencje aktywne</div>
+    <div class="stat-label">{{ t.dash_licenses_active }}</div>
   </a>
 </div>
 
@@ -49,7 +49,7 @@
   <div class="card">
     <div class="card-header">
       <span class="material-icons-round" style="color:var(--md-primary)">category</span>
-      <h2>Sprzęt według kategorii</h2>
+      <h2>{{ t.dash_by_category }}</h2>
     </div>
     <div class="card-body" style="padding:0">
       {% for cat in categories %}
@@ -66,7 +66,7 @@
   <div class="card">
     <div class="card-header">
       <span class="material-icons-round" style="color:var(--md-primary)">history</span>
-      <h2>Ostatnie zdarzenia</h2>
+      <h2>{{ t.dash_recent }}</h2>
     </div>
     <div class="card-body">
       <div class="timeline">
@@ -80,7 +80,7 @@
           </div>
           <div class="timeline-content">
             <div class="timeline-title">
-              {{ h.get_action_display() }}
+              {{ t.get('action_' + h.action, h.action) }}
               {% if h.asset %}<a href="/assets/{{ h.asset.id }}/">{{ h.asset.asset_tag }}</a>{% endif %}
               {% if h.license %}<a href="/licenses/{{ h.license.id }}/">{{ h.license.asset_tag }}</a>{% endif %}
             </div>
@@ -90,7 +90,7 @@
         {% else %}
         <div class="empty-state" style="padding:20px">
           <span class="material-icons-round" style="font-size:32px">history</span>
-          <p>Brak historii</p>
+          <p>{{ t.lbl_no_history }}</p>
         </div>
         {% endfor %}
       </div>
@@ -102,7 +102,7 @@
   <div class="card">
     <div class="card-header">
       <span class="material-icons-round" style="color:var(--md-warning)">warning</span>
-      <h2>Kończące się gwarancje (60 dni)</h2>
+      <h2>{{ t.dash_expiring_warranties }}</h2>
     </div>
     <div class="card-body" style="padding:0">
       {% for a in expiring_warranties %}
@@ -121,7 +121,7 @@
   <div class="card">
     <div class="card-header">
       <span class="material-icons-round" style="color:var(--md-warning)">schedule</span>
-      <h2>Kończące się licencje</h2>
+      <h2>{{ t.dash_expiring_licenses }}</h2>
     </div>
     <div class="card-body" style="padding:0">
       {% for l in expiring_licenses %}

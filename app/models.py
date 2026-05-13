@@ -95,19 +95,6 @@ class Category(Base):
 
     assets = relationship("Asset", back_populates="category")
 
-    SLUG_CHOICES = [
-        ("laptop", "Laptop"),
-        ("desktop", "Komputer stacjonarny"),
-        ("monitor", "Monitor"),
-        ("phone", "Telefon"),
-        ("tablet", "Tablet"),
-        ("printer", "Drukarka"),
-        ("network", "Sprzęt sieciowy"),
-        ("peripheral", "Peryferia"),
-        ("license", "Licencja"),
-        ("other", "Inne"),
-    ]
-
     def __str__(self) -> str:
         return self.name
 
@@ -162,11 +149,6 @@ class Asset(Base):
         cascade="all, delete-orphan",
     )
 
-    def get_status_display(self) -> str:
-        return dict(self.STATUS_CHOICES).get(self.status, self.status)
-
-    def get_absolute_url(self) -> str:
-        return f"/assets/{self.id}/"
 
 
 class License(Base):
@@ -206,19 +188,9 @@ class License(Base):
         cascade="all, delete-orphan",
     )
 
-    def get_status_display(self) -> str:
-        return dict(self.STATUS_CHOICES).get(self.status, self.status)
-
-    def get_absolute_url(self) -> str:
-        return f"/licenses/{self.id}/"
-
     @property
     def seats_used(self) -> int:
         return len(self.assigned_users)
-
-    @property
-    def seats_available(self) -> int:
-        return max(0, self.seats - self.seats_used)
 
 
 class AssetHistory(Base):
@@ -252,5 +224,3 @@ class AssetHistory(Base):
     user = relationship("User", foreign_keys=[user_id])
     performed_by = relationship("User", foreign_keys=[performed_by_id])
 
-    def get_action_display(self) -> str:
-        return dict(self.ACTION_CHOICES).get(self.action, self.action)

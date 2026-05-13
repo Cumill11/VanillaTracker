@@ -1,27 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}Usuń{% endblock %}
-{% block page_title %}Potwierdź usunięcie{% endblock %}
+{% block title %}{{ t.btn_delete }}{% endblock %}
+{% block page_title %}{{ t.delete_title }}{% endblock %}
 
 {% block content %}
 <div style="max-width:500px">
   <div class="card">
     <div class="card-header">
       <span class="material-icons-round" style="color:var(--md-error)">delete_forever</span>
-      <h2>Potwierdź usunięcie</h2>
+      <h2>{{ t.delete_title }}</h2>
     </div>
     <div class="card-body">
       <p style="margin-bottom:24px;color:var(--md-on-surface)">
-        Czy na pewno chcesz usunąć: <strong>{{ object_name }}</strong>?
-        <br><span class="text-sm text-muted">Tej operacji nie można cofnąć.</span>
+        {{ t.delete_question }} <strong>{{ object_name }}</strong>?
+        <br><span class="text-sm text-muted">{{ t.delete_irreversible }}</span>
       </p>
       <form method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <div class="flex gap-12">
           <button type="submit" class="btn btn-error">
-            <span class="material-icons-round">delete</span> Usuń
+            <span class="material-icons-round">delete</span> {{ t.btn_delete }}
           </button>
-          <a href="{{ cancel_url }}" class="btn btn-outlined">Anuluj</a>
+          <a href="{{ cancel_url }}" class="btn btn-outlined">{{ t.btn_cancel }}</a>
         </div>
       </form>
     </div>
