@@ -73,7 +73,7 @@ def generate_labels_pdf(assets: list, base_url: str) -> io.BytesIO:
     for i, asset in enumerate(assets):
         if i > 0:
             c.showPage()
-        _draw_label(c, asset.asset_tag, f"{base_url}{asset.get_absolute_url()}")
+        _draw_label(c, asset.asset_tag, f"{base_url}/assets/{asset.id}/")
     c.save()
     buf.seek(0)
     return buf
