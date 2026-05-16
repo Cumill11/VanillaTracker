@@ -19,8 +19,10 @@ def _build_database_url() -> str:
 
 DATABASE_URL = _build_database_url()
 
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+is_sqlite = DATABASE_URL.startswith("sqlite")
+connect_args = {"check_same_thread": False} if is_sqlite else {}
+pool_kwargs = {} if is_sqlite else {"pool_pre_ping": True, "pool_recycle": 1800}
+engine = create_engine(DATABASE_URL, connect_args=connect_args, **pool_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
