@@ -470,5 +470,12 @@
 </nav>
 
 {% block extra_js %}{% endblock %}
+<script>
+  var _searchTimer;
+  function debounceSearch(input) {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(function() { input.form.submit(); }, 500);
+  }
+</script>
 </body>
 </html>

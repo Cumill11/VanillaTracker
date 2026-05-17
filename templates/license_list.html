@@ -14,7 +14,7 @@
   <div class="filters-bar">
     <div class="search-field">
       <span class="material-icons-round">search</span>
-      <input type="text" name="q" value="{{ current_q }}" placeholder="{{ t.lbl_search }}" oninput="this.form.submit()">
+      <input type="text" name="q" value="{{ current_q }}" placeholder="{{ t.lbl_search }}" oninput="debounceSearch(this)">
     </div>
     <select name="status" class="md3-select" style="width:auto" onchange="this.form.submit()">
       <option value="">{{ t.lbl_all_statuses }}</option>
