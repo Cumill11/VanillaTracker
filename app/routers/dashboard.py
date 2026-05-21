@@ -59,7 +59,7 @@ async def dashboard(
         "assigned_assets":   db.query(Asset).filter_by(status=Asset.STATUS_ASSIGNED).count(),
         "available_assets":  db.query(Asset).filter_by(status=Asset.STATUS_AVAILABLE).count(),
         "maintenance_assets": db.query(Asset).filter_by(status=Asset.STATUS_MAINTENANCE).count(),
-        "total_users":       db.query(User).filter_by(is_active=True).count(),
+        "total_users":       db.query(User).count(),
         "total_licenses":    db.query(License).count(),
         "active_licenses":   db.query(License).filter_by(status=License.STATUS_ACTIVE).count(),
         "categories":        cat_list,

@@ -65,9 +65,11 @@ def test_asset_create_adds_history(auth_client, db):
     assert len(history) >= 1
 
 
-def test_asset_create_missing_name(auth_client, db):
-    resp = _create_asset(auth_client, db, name="")
-    assert resp.status_code == 400
+def test_asset_create_blank_name_uses_mfr_model(auth_client, db):
+    resp = _create_asset(auth_client, db, name="", manufacturer="Dell", model_name="XPS 13")
+    assert resp.status_code == 302
+    asset = query(Asset, model_name="XPS 13")
+    assert asset.name == "Dell XPS 13"
 
 
 def test_asset_create_missing_manufacturer(auth_client, db):
@@ -109,14 +111,13 @@ def test_asset_update(auth_client, db):
         "category_id": str(cat_id),
         "manufacturer": "HP",
         "model_name": "New Model",
-        "status": "maintenance",
         "csrf_token": csrf,
     }, follow_redirects=False)
     assert resp.status_code == 302
 
     updated = query(Asset, id=asset.id)
     assert updated.name == "Updated Name"
-    assert updated.status == "maintenance"
+    assert updated.manufacturer == "HP"
 
 
 # ── delete ────────────────────────────────────────────────────────────────────
@@ -139,7 +140,7 @@ def test_asset_delete(auth_client, db):
 
 def _make_user(db, username="worker"):
     u = User(username=username, password_hash=hash_password("pass"),
-             is_active=True, is_superuser=False)
+             is_superuser=False)
     db.add(u)
     db.flush()
     db.add(UserProfile(user_id=u.id))
@@ -201,3 +202,47 @@ def test_asset_assign_invalid_user_id(auth_client, db):
     assert resp.status_code == 302
     updated = query(Asset, id=asset.id)
     assert updated.assigned_to_id is None
+
+
+# ── tag pool ──────────────────────────────────────────────────────────────────
+
+def test_asset_delete_returns_tag_to_pool(auth_client, db):
+    _create_asset(auth_client, db, name="Pool A")
+    a = query(Asset, name="Pool A")
+    freed = a.tag_number
+    csrf = extract_csrf(auth_client.get(f"/assets/{a.id}/delete/").text)
+    auth_client.post(f"/assets/{a.id}/delete/", data={"csrf_token": csrf},
+                     follow_redirects=False)
+    _create_asset(auth_client, db, name="Pool B")
+    b = query(Asset, name="Pool B")
+    assert b.tag_number == freed
+
+
+# ── quick status change ───────────────────────────────────────────────────────
+
+def test_asset_status_quick_change(auth_client, db):
+    _create_asset(auth_client, db)
+    asset = query(Asset, name="Test Laptop")
+    csrf = extract_csrf(auth_client.get(f"/assets/{asset.id}/").text)
+    resp = auth_client.post(f"/assets/{asset.id}/status/", data={
+        "status": "maintenance", "csrf_token": csrf,
+    }, follow_redirects=False)
+    assert resp.status_code == 302
+    assert query(Asset, id=asset.id).status == "maintenance"
+
+
+def test_asset_status_change_blocked_when_assigned(auth_client, db):
+    _create_asset(auth_client, db)
+    asset = query(Asset, name="Test Laptop")
+    worker = _make_user(db)
+    csrf = extract_csrf(auth_client.get(f"/assets/{asset.id}/").text)
+    auth_client.post(f"/assets/{asset.id}/assign/", data={
+        "assign_user_id": str(worker.id),
+        "assigned_date": "2024-01-01",
+        "csrf_token": csrf,
+    })
+    csrf = extract_csrf(auth_client.get(f"/assets/{asset.id}/").text)
+    auth_client.post(f"/assets/{asset.id}/status/", data={
+        "status": "retired", "csrf_token": csrf,
+    }, follow_redirects=False)
+    assert query(Asset, id=asset.id).status == "assigned"

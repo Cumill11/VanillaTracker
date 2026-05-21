@@ -109,7 +109,7 @@ def test_license_assign_users(auth_client, db):
     lic_id = lic.id
 
     worker = User(username="worker", password_hash=hash_password("pass"),
-                  is_active=True, is_superuser=False)
+                  is_superuser=False)
     db.add(worker)
     db.flush()
     db.add(UserProfile(user_id=worker.id))
@@ -141,3 +141,17 @@ def test_license_assign_invalid_user_ids(auth_client):
     with TestingSession() as fresh_db:
         updated_lic = fresh_db.query(License).filter_by(id=lic_id).first()
         assert updated_lic.assigned_users == []
+
+
+# ── status derived from expiry date ──────────────────────────────────────────
+
+def test_license_status_expired_from_past_date(auth_client):
+    _create_license(auth_client, status="active", expiry_date="2000-01-01")
+    lic = query(License, name="Test License")
+    assert lic.status == "expired"
+
+
+def test_license_status_stays_manual_when_not_expired(auth_client):
+    _create_license(auth_client, status="inactive", expiry_date="2999-01-01")
+    lic = query(License, name="Test License")
+    assert lic.status == "inactive"

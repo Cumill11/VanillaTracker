@@ -100,7 +100,6 @@ def test_user_update(auth_client):
         "first_name": "Janusz",
         "last_name": "Nowak",
         "email": "janusz@test.com",
-        "is_active": "1",
         "csrf_token": csrf,
     }, follow_redirects=False)
     assert resp.status_code == 302
@@ -164,3 +163,31 @@ def test_create_department_missing_name(auth_client):
         "csrf_token": csrf,
     })
     assert resp.status_code == 400
+
+
+# ── delete ────────────────────────────────────────────────────────────────────
+
+def test_user_delete(auth_client):
+    _create_user(auth_client)
+    user = query(User, first_name="Jan", last_name="Kowalski")
+    user_id = user.id
+    csrf = extract_csrf(auth_client.get(f"/users/{user_id}/delete/").text)
+    resp = auth_client.post(f"/users/{user_id}/delete/",
+                            data={"csrf_token": csrf}, follow_redirects=False)
+    assert resp.status_code == 302
+    assert query(User, id=user_id) is None
+
+
+def test_user_delete_blocked_by_assigned_asset(auth_client, db):
+    from app.models import Asset
+    _create_user(auth_client)
+    user = query(User, first_name="Jan", last_name="Kowalski")
+    db.add(Asset(asset_tag="IT-90001", tag_number=90001, name="Laptop",
+                 manufacturer="Dell", model_name="M1", status="assigned",
+                 assigned_to_id=user.id))
+    db.commit()
+    csrf = extract_csrf(auth_client.get(f"/users/{user.id}/edit/").text)
+    resp = auth_client.post(f"/users/{user.id}/delete/",
+                            data={"csrf_token": csrf}, follow_redirects=False)
+    assert resp.status_code == 302
+    assert query(User, id=user.id) is not None

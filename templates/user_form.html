@@ -65,20 +65,6 @@
             <input type="text" name="phone" class="md3-input" value="{{ form_data.phone or '' }}">
           </div>
 
-          {% if edit_user %}
-          <div class="form-group">
-            <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:14px">
-              <input type="checkbox" name="is_active" value="1" {% if form_data.is_active %}checked{% endif %} style="width:18px;height:18px;accent-color:var(--md-primary)">
-              {{ t.user_active_account }}
-            </label>
-          </div>
-          <div class="form-group">
-            <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:14px">
-              <input type="checkbox" name="is_active_employee" value="1" {% if form_data.is_active_employee %}checked{% endif %} style="width:18px;height:18px;accent-color:var(--md-primary)">
-              {{ t.user_active_employee }}
-            </label>
-          </div>
-          {% endif %}
         </div>
       </div>
     </div>

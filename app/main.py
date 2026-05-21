@@ -12,8 +12,8 @@ from app.i18n import lang_context_processor
 
 load_dotenv()
 
-from sqlalchemy import inspect as sa_inspect, text
-from app.database import engine, Base, SessionLocal
+from sqlalchemy import inspect as sa_inspect
+from app.database import engine, SessionLocal
 from app.deps import _Redirect
 from app.routers import auth, dashboard, assets, licenses, users, categories
 from app.routers import setup as setup_module
@@ -28,16 +28,29 @@ if SECRET_KEY == _DEFAULT_SECRET:
         file=sys.stderr,
     )
 
-# Create tables, seed required data, detect first-run
-Base.metadata.create_all(bind=engine)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Migrate existing databases: add department_id to assets if missing
-_insp = sa_inspect(engine)
-if "assets" in _insp.get_table_names():
-    if "department_id" not in [c["name"] for c in _insp.get_columns("assets")]:
-        with engine.connect() as _conn:
-            _conn.execute(text("ALTER TABLE assets ADD COLUMN department_id INTEGER"))
-            _conn.commit()
+
+def _run_migrations() -> None:
+    """Bring the database schema up to date via Alembic.
+
+    A database that predates Alembic (tables exist but no alembic_version)
+    is adopted by stamping it at the baseline revision, then upgraded.
+    """
+    from alembic import command
+    from alembic.config import Config
+
+    alembic_cfg = Config(os.path.join(BASE_DIR, "alembic.ini"))
+    alembic_cfg.set_main_option("script_location", os.path.join(BASE_DIR, "migrations"))
+
+    existing = sa_inspect(engine).get_table_names()
+    if "alembic_version" not in existing and "users" in existing:
+        command.stamp(alembic_cfg, "0001")
+    command.upgrade(alembic_cfg, "head")
+
+
+# Apply migrations, then seed required data and detect first-run
+_run_migrations()
 
 _CATEGORIES = [
     ("Laptop", "laptop"), ("Komputer stacjonarny", "desktop"),
@@ -73,7 +86,6 @@ async def setup_guard(request: Request, call_next):
     return await call_next(request)
 
 # Static files
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 # Jinja2 templates

@@ -33,19 +33,6 @@ def test_authenticate_unknown_user(db):
     assert authenticate(db, "nobody", "pass") is None
 
 
-def test_authenticate_inactive_user(db):
-    from app.models import User, UserProfile
-    user = User(
-        username="inactive", password_hash=hash_password("pass"),
-        is_active=False, is_superuser=False,
-    )
-    db.add(user)
-    db.flush()
-    db.add(UserProfile(user_id=user.id))
-    db.commit()
-    assert authenticate(db, "inactive", "pass") is None
-
-
 def test_login_page_has_csrf(client, admin_user):
     resp = client.get("/login/")
     assert resp.status_code == 200

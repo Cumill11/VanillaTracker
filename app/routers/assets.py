@@ -11,7 +11,7 @@ from app.database import get_db
 from app.auth import verify_csrf
 from app.deps import ctx, login_required
 from app.flash import add_message
-from app.models import Asset, AssetCounter, AssetHistory, Category, Department, Settings, User
+from app.models import Asset, AssetCounter, AssetHistory, Category, Department, Settings, TagPool, User
 from app.pagination import paginate
 from app.label_pdf import generate_labels_pdf
 
@@ -22,6 +22,12 @@ templates: Jinja2Templates = None
 def _next_tag(db: Session) -> tuple[int, str]:
     s = db.query(Settings).filter_by(key="tag_prefix").first()
     prefix = s.value if s else "BS"
+    pooled = db.query(TagPool).order_by(TagPool.tag_number).first()
+    if pooled is not None:
+        num = pooled.tag_number
+        db.delete(pooled)
+        db.flush()
+        return num, f"{prefix}-{num:05d}"
     counter = db.query(AssetCounter).filter_by(id=1).with_for_update().first()
     if counter is None:
         counter = AssetCounter(id=1, last_number=0)
@@ -64,8 +70,6 @@ def _parse_int(s: str):
 
 def _validate_asset(data: dict) -> dict:
     errors = {}
-    if not data.get("name", "").strip():
-        errors["name"] = ["To pole jest wymagane."]
     if _parse_int(data.get("category_id", "")) is None:
         errors["category"] = ["To pole jest wymagane."]
     if not data.get("manufacturer", "").strip():
@@ -141,8 +145,6 @@ async def asset_create_get(
         **base,
         "title": "Dodaj sprzęt",
         "categories": db.query(Category).order_by(Category.name).all(),
-        "departments": db.query(Department).order_by(Department.name).all(),
-        "status_choices": Asset.STATUS_CHOICES,
         "categories_json": _categories_json(db),
         "errors": {},
         "form_data": {},
@@ -162,15 +164,12 @@ async def asset_create_post(
     purchase_date: str = Form(""),
     purchase_price: str = Form(""),
     warranty_expiry: str = Form(""),
-    status: str = Form("available"),
-    location: str = Form(""),
     notes: str = Form(""),
     cpu: str = Form(""),
     ram: str = Form(""),
     storage: str = Form(""),
     phone_number: str = Form(""),
     ink_type: str = Form(""),
-    department_id: str = Form(""),
     csrf_token: str = Form(""),
 ):
     verify_csrf(request, csrf_token)
@@ -185,34 +184,30 @@ async def asset_create_post(
             "name": name, "category_id": category_id, "manufacturer": manufacturer,
             "model_name": model_name, "serial_number": serial_number,
             "purchase_date": purchase_date, "purchase_price": purchase_price,
-            "warranty_expiry": warranty_expiry, "status": status,
-            "location": location, "notes": notes,
+            "warranty_expiry": warranty_expiry, "notes": notes,
             "cpu": cpu, "ram": ram, "storage": storage,
             "phone_number": phone_number, "ink_type": ink_type,
-            "department_id": department_id,
         }
         return templates.TemplateResponse(request, "asset_form.html", {
             **base, "title": "Dodaj sprzęt",
             "categories": db.query(Category).order_by(Category.name).all(),
-            "departments": db.query(Department).order_by(Department.name).all(),
-            "status_choices": Asset.STATUS_CHOICES,
             "categories_json": _categories_json(db),
             "errors": errors, "form_data": form_data,
         }, status_code=400)
 
+    final_name = name.strip() or f"{manufacturer.strip()} {model_name.strip()}".strip()
     num, tag = _next_tag(db)
     asset = Asset(
         asset_tag=tag, tag_number=num,
-        name=name.strip(), category_id=_parse_int(category_id),
+        name=final_name, category_id=_parse_int(category_id),
         manufacturer=manufacturer.strip(), model_name=model_name.strip(),
         serial_number=serial_number.strip() or None,
         purchase_date=_parse_date(purchase_date),
         purchase_price=_parse_decimal(purchase_price),
         warranty_expiry=_parse_date(warranty_expiry),
-        status=status, location=location.strip(), notes=notes.strip(),
+        status=Asset.STATUS_AVAILABLE, notes=notes.strip(),
         cpu=cpu.strip(), ram=ram.strip(), storage=storage.strip(),
         phone_number=phone_number.strip(), ink_type=ink_type.strip(),
-        department_id=_parse_int(department_id),
     )
     db.add(asset)
     db.flush()
@@ -272,7 +267,7 @@ async def asset_detail(
         .order_by(AssetHistory.created_at.desc())
         .all()
     )
-    users_qs = db.query(User).filter_by(is_active=True).order_by(User.last_name, User.first_name).all()
+    users_qs = db.query(User).order_by(User.last_name, User.first_name).all()
     return templates.TemplateResponse(request, "asset_detail.html", {
         **base,
         "asset": asset,
@@ -301,18 +296,15 @@ async def asset_update_get(
         "purchase_date": asset.purchase_date.isoformat() if asset.purchase_date else "",
         "purchase_price": str(asset.purchase_price) if asset.purchase_price else "",
         "warranty_expiry": asset.warranty_expiry.isoformat() if asset.warranty_expiry else "",
-        "status": asset.status, "location": asset.location, "notes": asset.notes,
+        "notes": asset.notes,
         "cpu": asset.cpu or "", "ram": asset.ram or "", "storage": asset.storage or "",
         "phone_number": asset.phone_number or "", "ink_type": asset.ink_type or "",
-        "department_id": str(asset.department_id or ""),
     }
     return templates.TemplateResponse(request, "asset_form.html", {
         **base,
         "title": f"Edytuj {asset.asset_tag}",
         "object": asset,
         "categories": db.query(Category).order_by(Category.name).all(),
-        "departments": db.query(Department).order_by(Department.name).all(),
-        "status_choices": Asset.STATUS_CHOICES,
         "categories_json": _categories_json(db),
         "errors": {}, "form_data": form_data,
     })
@@ -331,15 +323,12 @@ async def asset_update_post(
     purchase_date: str = Form(""),
     purchase_price: str = Form(""),
     warranty_expiry: str = Form(""),
-    status: str = Form("available"),
-    location: str = Form(""),
     notes: str = Form(""),
     cpu: str = Form(""),
     ram: str = Form(""),
     storage: str = Form(""),
     phone_number: str = Form(""),
     ink_type: str = Form(""),
-    department_id: str = Form(""),
     csrf_token: str = Form(""),
 ):
     verify_csrf(request, csrf_token)
@@ -355,22 +344,18 @@ async def asset_update_post(
             "name": name, "category_id": category_id, "manufacturer": manufacturer,
             "model_name": model_name, "serial_number": serial_number,
             "purchase_date": purchase_date, "purchase_price": purchase_price,
-            "warranty_expiry": warranty_expiry, "status": status,
-            "location": location, "notes": notes,
+            "warranty_expiry": warranty_expiry, "notes": notes,
             "cpu": cpu, "ram": ram, "storage": storage,
             "phone_number": phone_number, "ink_type": ink_type,
-            "department_id": department_id,
         }
         return templates.TemplateResponse(request, "asset_form.html", {
             **base, "title": f"Edytuj {asset.asset_tag}", "object": asset,
             "categories": db.query(Category).order_by(Category.name).all(),
-            "departments": db.query(Department).order_by(Department.name).all(),
-            "status_choices": Asset.STATUS_CHOICES,
             "categories_json": _categories_json(db),
             "errors": errors, "form_data": form_data,
         }, status_code=400)
 
-    asset.name = name.strip()
+    asset.name = name.strip() or f"{manufacturer.strip()} {model_name.strip()}".strip()
     asset.category_id = _parse_int(category_id)
     asset.manufacturer = manufacturer.strip()
     asset.model_name = model_name.strip()
@@ -378,15 +363,12 @@ async def asset_update_post(
     asset.purchase_date = _parse_date(purchase_date)
     asset.purchase_price = _parse_decimal(purchase_price)
     asset.warranty_expiry = _parse_date(warranty_expiry)
-    asset.status = status
-    asset.location = location.strip()
     asset.notes = notes.strip()
     asset.cpu = cpu.strip()
     asset.ram = ram.strip()
     asset.storage = storage.strip()
     asset.phone_number = phone_number.strip()
     asset.ink_type = ink_type.strip()
-    asset.department_id = _parse_int(department_id)
     db.commit()
     add_message(request, f"Sprzęt {asset.asset_tag} zaktualizowany.")
     return RedirectResponse(f"/assets/{asset.id}/", status_code=302)
@@ -422,6 +404,7 @@ async def asset_delete_post(
     asset = db.query(Asset).filter_by(id=pk).first()
     if asset:
         tag = asset.asset_tag
+        db.add(TagPool(tag_number=asset.tag_number))
         db.delete(asset)
         db.commit()
         add_message(request, f"Sprzęt {tag} usunięty.")
@@ -513,6 +496,62 @@ async def asset_assign_dept(
             performed_by_id=user.id, note=note,
         ))
         db.commit()
+    return RedirectResponse(f"/assets/{pk}/", status_code=302)
+
+
+# ── Quick status change ───────────────────────────────────────────────────────
+
+_QUICK_STATUS_NOTES = {
+    Asset.STATUS_AVAILABLE: "Oznaczono jako dostępny.",
+    Asset.STATUS_MAINTENANCE: "Przekazano do serwisu.",
+    Asset.STATUS_RETIRED: "Wycofano z użytku.",
+}
+
+
+_STATUS_QUESTIONS = {
+    Asset.STATUS_MAINTENANCE: "Czy przekazać sprzęt do serwisu?",
+    Asset.STATUS_RETIRED: "Czy wycofać sprzęt z użytku?",
+}
+
+
+@router.get("/{pk}/status/", name="asset-status-confirm")
+async def asset_status_confirm(
+    pk: int, request: Request,
+    db: Session = Depends(get_db),
+    user=Depends(login_required),
+    status: str = "",
+):
+    asset = db.query(Asset).filter_by(id=pk).first()
+    if not asset or status not in _STATUS_QUESTIONS or asset.assigned_to_id:
+        return RedirectResponse(f"/assets/{pk}/", status_code=302)
+    return templates.TemplateResponse(request, "confirm_status.html", {
+        **ctx(request, db),
+        "asset": asset,
+        "new_status": status,
+        "question": _STATUS_QUESTIONS[status],
+    })
+
+
+@router.post("/{pk}/status/", name="asset-status")
+async def asset_status(
+    pk: int, request: Request,
+    db: Session = Depends(get_db),
+    user=Depends(login_required),
+    status: str = Form(""),
+    csrf_token: str = Form(""),
+):
+    verify_csrf(request, csrf_token)
+    asset = db.query(Asset).filter_by(id=pk).first()
+    if asset and status in _QUICK_STATUS_NOTES and not asset.assigned_to_id:
+        if asset.status != status:
+            note = _QUICK_STATUS_NOTES[status]
+            asset.status = status
+            db.add(AssetHistory(
+                asset_id=asset.id, action=AssetHistory.ACTION_STATUS,
+                performed_by_id=user.id, note=note,
+            ))
+            db.commit()
+            add_message(request, f"{asset.asset_tag}: {note}")
     return RedirectResponse(f"/assets/{pk}/", status_code=302)
 
 

@@ -29,29 +29,8 @@
         <div class="form-grid">
 
           <div class="form-group" style="grid-column:1/-1">
-            <label>{{ t.lbl_name }}<span class="req">*</span></label>
-            <input type="text" name="name" class="md3-input" value="{{ form_data.name or '' }}">
-            {% if errors.name %}<ul class="errorlist">{% for e in errors.name %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-
-          <div class="form-group">
-            <label>{{ t.asset_category }}<span class="req">*</span></label>
-            <select name="category_id" id="id_category" class="md3-select">
-              <option value="">{{ t.lbl_select }}</option>
-              {% for cat in categories %}
-              <option value="{{ cat.id }}" {% if form_data.category_id == cat.id|string %}selected{% endif %}>{{ t.get('cat_' + cat.slug, cat.name) }}</option>
-              {% endfor %}
-            </select>
-            {% if errors.category %}<ul class="errorlist">{% for e in errors.category %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-          </div>
-
-          <div class="form-group">
-            <label>{{ t.lbl_status }}<span class="req">*</span></label>
-            <select name="status" class="md3-select">
-              {% for val, label in status_choices %}
-              <option value="{{ val }}" {% if (form_data.status or 'available') == val %}selected{% endif %}>{{ t.get('status_' + val, label) }}</option>
-              {% endfor %}
-            </select>
+            <label>{{ t.lbl_name }}</label>
+            <input type="text" name="name" class="md3-input" value="{{ form_data.name or '' }}" placeholder="Puste — użyje producenta i modelu">
           </div>
 
           <div class="form-group">
@@ -67,23 +46,19 @@
           </div>
 
           <div class="form-group">
-            <label>{{ t.asset_serial }}</label>
-            <input type="text" name="serial_number" class="md3-input" value="{{ form_data.serial_number or '' }}">
-          </div>
-
-          <div class="form-group">
-            <label>{{ t.asset_location }}</label>
-            <input type="text" name="location" class="md3-input" value="{{ form_data.location or '' }}">
-          </div>
-
-          <div class="form-group">
-            <label>{{ t.asset_dept }}</label>
-            <select name="department_id" class="md3-select">
-              <option value="">{{ t.lbl_none }}</option>
-              {% for dept in departments %}
-              <option value="{{ dept.id }}" {% if form_data.department_id == dept.id|string %}selected{% endif %}>{{ dept.name }}</option>
+            <label>{{ t.asset_category }}<span class="req">*</span></label>
+            <select name="category_id" id="id_category" class="md3-select">
+              <option value="">{{ t.lbl_select }}</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}" {% if form_data.category_id == cat.id|string %}selected{% endif %}>{{ t.get('cat_' + cat.slug, cat.name) }}</option>
               {% endfor %}
             </select>
+            {% if errors.category %}<ul class="errorlist">{% for e in errors.category %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label>{{ t.asset_serial }}</label>
+            <input type="text" name="serial_number" class="md3-input" value="{{ form_data.serial_number or '' }}">
           </div>
 
           <div class="form-group">

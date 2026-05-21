@@ -22,10 +22,6 @@
       <option value="{{ dept.id }}" {% if current_dept == dept.id|string %}selected{% endif %}>{{ dept.name }}</option>
       {% endfor %}
     </select>
-    <select name="active" class="md3-select" style="width:auto" onchange="this.form.submit()">
-      <option value="1" {% if current_active == '1' %}selected{% endif %}>{{ t.users_filter_active }}</option>
-      <option value="" {% if current_active == '' %}selected{% endif %}>{{ t.users_filter_all }}</option>
-    </select>
   </div>
 </form>
 
@@ -50,7 +46,6 @@
               <div class="avatar">{{ u.get_initials() }}</div>
               <div>
                 <a href="/users/{{ u.id }}/" style="color:var(--md-on-surface)">{{ u.get_full_name() }}</a>
-                {% if not u.is_active %}<span class="text-xs text-muted"> {{ t.users_inactive }}</span>{% endif %}
               </div>
             </div>
           </td>
@@ -103,13 +98,13 @@
   {% if pagination.num_pages > 1 %}
   <div class="pagination">
     {% if pagination.has_prev %}
-    <a href="?q={{ current_q }}&department={{ current_dept }}&active={{ current_active }}&page={{ pagination.page - 1 }}" class="page-btn"><span class="material-icons-round">chevron_left</span></a>
+    <a href="?q={{ current_q }}&department={{ current_dept }}&page={{ pagination.page - 1 }}" class="page-btn"><span class="material-icons-round">chevron_left</span></a>
     {% endif %}
     {% for p in range(1, pagination.num_pages + 1) %}
-    <a href="?q={{ current_q }}&department={{ current_dept }}&active={{ current_active }}&page={{ p }}" class="page-btn {% if p == pagination.page %}current{% endif %}">{{ p }}</a>
+    <a href="?q={{ current_q }}&department={{ current_dept }}&page={{ p }}" class="page-btn {% if p == pagination.page %}current{% endif %}">{{ p }}</a>
     {% endfor %}
     {% if pagination.has_next %}
-    <a href="?q={{ current_q }}&department={{ current_dept }}&active={{ current_active }}&page={{ pagination.page + 1 }}" class="page-btn"><span class="material-icons-round">chevron_right</span></a>
+    <a href="?q={{ current_q }}&department={{ current_dept }}&page={{ pagination.page + 1 }}" class="page-btn"><span class="material-icons-round">chevron_right</span></a>
     {% endif %}
   </div>
   {% endif %}

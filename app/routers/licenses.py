@@ -10,7 +10,7 @@ from app.database import get_db
 from app.auth import verify_csrf
 from app.deps import ctx, login_required
 from app.flash import add_message
-from app.models import AssetCounter, AssetHistory, License, Settings, User
+from app.models import AssetCounter, AssetHistory, License, Settings, TagPool, User
 from app.pagination import paginate
 
 router = APIRouter(prefix="/licenses")
@@ -20,6 +20,12 @@ templates: Jinja2Templates = None
 def _next_tag(db: Session) -> tuple[int, str]:
     s = db.query(Settings).filter_by(key="tag_prefix").first()
     prefix = s.value if s else "BS"
+    pooled = db.query(TagPool).order_by(TagPool.tag_number).first()
+    if pooled is not None:
+        num = pooled.tag_number
+        db.delete(pooled)
+        db.flush()
+        return num, f"{prefix}-{num:05d}"
     counter = db.query(AssetCounter).filter_by(id=1).with_for_update().first()
     if counter is None:
         counter = AssetCounter(id=1, last_number=0)
@@ -46,6 +52,14 @@ def _parse_decimal(s: str):
         return Decimal(s.replace(",", "."))
     except InvalidOperation:
         return None
+
+
+def _effective_status(expiry_date, manual_status: str) -> str:
+    if expiry_date and expiry_date < parse_date.today():
+        return License.STATUS_EXPIRED
+    if manual_status in (License.STATUS_ACTIVE, License.STATUS_INACTIVE):
+        return manual_status
+    return License.STATUS_ACTIVE
 
 
 # ── List ──────────────────────────────────────────────────────────────────────
@@ -93,7 +107,7 @@ async def license_create_get(
     return templates.TemplateResponse(request, "license_form.html", {
         **base,
         "title": "Dodaj licencję",
-        "status_choices": License.STATUS_CHOICES,
+        "status_choices": License.MANUAL_STATUS_CHOICES,
         "errors": {}, "form_data": {},
     })
 
@@ -125,19 +139,20 @@ async def license_create_post(
                          purchase_price=purchase_price, status=status, notes=notes)
         return templates.TemplateResponse(request, "license_form.html", {
             **base, "title": "Dodaj licencję",
-            "status_choices": License.STATUS_CHOICES,
+            "status_choices": License.MANUAL_STATUS_CHOICES,
             "errors": errors, "form_data": form_data,
         }, status_code=400)
 
     num, tag = _next_tag(db)
+    parsed_expiry = _parse_date(expiry_date)
     lic = License(
         asset_tag=tag, tag_number=num,
         name=name.strip(), vendor=vendor.strip(), license_key=license_key.strip(),
         seats=int(seats) if seats.isdigit() else 1,
         purchase_date=_parse_date(purchase_date),
-        expiry_date=_parse_date(expiry_date),
+        expiry_date=parsed_expiry,
         purchase_price=_parse_decimal(purchase_price),
-        status=status, notes=notes.strip(),
+        status=_effective_status(parsed_expiry, status), notes=notes.strip(),
     )
     db.add(lic)
     db.commit()
@@ -163,7 +178,7 @@ async def license_detail(
         .order_by(AssetHistory.created_at.desc())
         .all()
     )
-    all_users = db.query(User).filter_by(is_active=True).order_by(User.last_name, User.first_name).all()
+    all_users = db.query(User).order_by(User.last_name, User.first_name).all()
     assigned_ids = {u.id for u in lic.assigned_users}
     return templates.TemplateResponse(request, "license_detail.html", {
         **base,
@@ -192,13 +207,14 @@ async def license_update_get(
         "purchase_date": lic.purchase_date.isoformat() if lic.purchase_date else "",
         "expiry_date": lic.expiry_date.isoformat() if lic.expiry_date else "",
         "purchase_price": str(lic.purchase_price) if lic.purchase_price else "",
-        "status": lic.status, "notes": lic.notes,
+        "status": lic.status if lic.status in (License.STATUS_ACTIVE, License.STATUS_INACTIVE) else License.STATUS_ACTIVE,
+        "notes": lic.notes,
     }
     return templates.TemplateResponse(request, "license_form.html", {
         **base,
         "title": f"Edytuj {lic.asset_tag}",
         "object": lic,
-        "status_choices": License.STATUS_CHOICES,
+        "status_choices": License.MANUAL_STATUS_CHOICES,
         "errors": {}, "form_data": form_data,
     })
 
@@ -233,7 +249,7 @@ async def license_update_post(
                          purchase_price=purchase_price, status=status, notes=notes)
         return templates.TemplateResponse(request, "license_form.html", {
             **base, "title": f"Edytuj {lic.asset_tag}", "object": lic,
-            "status_choices": License.STATUS_CHOICES,
+            "status_choices": License.MANUAL_STATUS_CHOICES,
             "errors": errors, "form_data": form_data,
         }, status_code=400)
 
@@ -244,7 +260,7 @@ async def license_update_post(
     lic.purchase_date = _parse_date(purchase_date)
     lic.expiry_date = _parse_date(expiry_date)
     lic.purchase_price = _parse_decimal(purchase_price)
-    lic.status = status
+    lic.status = _effective_status(lic.expiry_date, status)
     lic.notes = notes.strip()
     db.commit()
     add_message(request, f"Licencja {lic.asset_tag} zaktualizowana.")
@@ -281,6 +297,7 @@ async def license_delete_post(
     lic = db.query(License).filter_by(id=pk).first()
     if lic:
         tag = lic.asset_tag
+        db.add(TagPool(tag_number=lic.tag_number))
         db.delete(lic)
         db.commit()
         add_message(request, f"Licencja {tag} usunięta.")

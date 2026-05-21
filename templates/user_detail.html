@@ -10,6 +10,9 @@
 <a href="/users/{{ profile_user.id }}/password/" class="btn btn-tonal btn-sm">
   <span class="material-icons-round">lock_reset</span> {{ t.user_change_password }}
 </a>
+<a href="/users/{{ profile_user.id }}/delete/" class="btn btn-error btn-sm">
+  <span class="material-icons-round">delete</span> {{ t.btn_delete }}
+</a>
 {% endblock %}
 
 {% block breadcrumb %}
@@ -138,16 +141,6 @@
         <div class="detail-field">
           <span class="field-label">{{ t.user_phone }}</span>
           <span class="field-value">{{ profile_user.profile.phone if profile_user.profile and profile_user.profile.phone else '—' }}</span>
-        </div>
-        <div class="detail-field">
-          <span class="field-label">{{ t.lbl_status }}</span>
-          <span class="field-value">
-            {% if profile_user.is_active %}
-            <span class="status-chip" style="background:#4CAF5020;color:#4CAF50;border:1px solid #4CAF5040">{{ t.user_status_active }}</span>
-            {% else %}
-            <span class="status-chip" style="background:#9E9E9E20;color:#9E9E9E;border:1px solid #9E9E9E40">{{ t.user_status_inactive }}</span>
-            {% endif %}
-          </span>
         </div>
       </div>
     </div>

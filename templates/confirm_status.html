@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.asset_status_title }}{% endblock %}
+{% block page_title %}{{ t.asset_status_title }}{% endblock %}
+
+{% block content %}
+<div style="max-width:500px">
+  <div class="card">
+    <div class="card-header">
+      <span class="material-icons-round" style="color:var(--md-primary)">build</span>
+      <h2>{{ t.asset_status_title }}</h2>
+    </div>
+    <div class="card-body">
+      <p style="margin-bottom:24px;color:var(--md-on-surface)">
+        {{ question }} <strong>{{ asset.asset_tag }} — {{ asset.name }}</strong>
+      </p>
+      <form method="post" action="/assets/{{ asset.id }}/status/">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="status" value="{{ new_status }}">
+        <div class="flex gap-12">
+          <button type="submit" class="btn btn-filled">
+            <span class="material-icons-round">check</span> {{ t.btn_confirm }}
+          </button>
+          <a href="/assets/{{ asset.id }}/" class="btn btn-outlined">{{ t.btn_cancel }}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

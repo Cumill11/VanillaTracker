@@ -28,6 +28,12 @@ class AssetCounter(Base):
     last_number = Column(Integer, default=0, nullable=False)
 
 
+class TagPool(Base):
+    __tablename__ = "tag_pool"
+    id = Column(Integer, primary_key=True)
+    tag_number = Column(Integer, unique=True, nullable=False)
+
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
@@ -36,7 +42,6 @@ class User(Base):
     first_name = Column(String(150), default="")
     last_name = Column(String(150), default="")
     password_hash = Column(String(256), default="")
-    is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
     date_joined = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
@@ -80,7 +85,6 @@ class UserProfile(Base):
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     phone = Column(String(30), default="")
     position = Column(String(100), default="")
-    is_active_employee = Column(Boolean, default=True)
 
     user = relationship("User", back_populates="profile")
     department = relationship("Department", back_populates="profiles")
@@ -163,6 +167,12 @@ class License(Base):
     STATUS_CHOICES = [
         ("active", "Aktywna"),
         ("expired", "Wygasła"),
+        ("inactive", "Nieaktywna"),
+    ]
+
+    # Statuses a user may set manually; "expired" is derived from expiry_date.
+    MANUAL_STATUS_CHOICES = [
+        ("active", "Aktywna"),
         ("inactive", "Nieaktywna"),
     ]
 

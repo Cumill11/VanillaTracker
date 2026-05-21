@@ -79,7 +79,7 @@ def make_admin(db, username="admin", password="admin123"):
         username=username, first_name="Admin", last_name="Test",
         email="admin@test.com",
         password_hash=hash_password(password),
-        is_active=True, is_superuser=True,
+        is_superuser=True,
     )
     db.add(user)
     db.add(Settings(key="tag_prefix", value="IT"))

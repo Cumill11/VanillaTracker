@@ -74,10 +74,6 @@
             <span class="field-label">{{ t.asset_warranty }}</span>
             <span class="field-value">{{ asset.warranty_expiry|date_fmt if asset.warranty_expiry else '—' }}</span>
           </div>
-          <div class="detail-field">
-            <span class="field-label">{{ t.asset_location }}</span>
-            <span class="field-value">{{ asset.location or '—' }}</span>
-          </div>
           {% if asset.notes %}
           <div class="detail-field" style="grid-column:1/-1">
             <span class="field-label">{{ t.lbl_notes }}</span>
@@ -255,6 +251,37 @@
         </form>
       </div>
     </div>
+
+    <!-- Status -->
+    {% if asset.status in ['available', 'maintenance', 'retired'] %}
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">build</span>
+        <h2>{{ t.asset_status_title }}</h2>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+        {% if asset.status != 'available' %}
+        <form method="post" action="/assets/{{ asset.id }}/status/">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="status" value="available">
+          <button type="submit" class="btn btn-tonal btn-sm" style="width:100%">
+            <span class="material-icons-round">check_circle</span> {{ t.asset_status_to_available }}
+          </button>
+        </form>
+        {% endif %}
+        {% if asset.status != 'maintenance' %}
+        <a href="/assets/{{ asset.id }}/status/?status=maintenance" class="btn btn-outlined btn-sm" style="width:100%">
+          <span class="material-icons-round">build</span> {{ t.asset_status_to_maintenance }}
+        </a>
+        {% endif %}
+        {% if asset.status != 'retired' %}
+        <a href="/assets/{{ asset.id }}/status/?status=retired" class="btn btn-outlined btn-sm" style="width:100%">
+          <span class="material-icons-round">archive</span> {{ t.asset_status_to_retired }}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
 
     <!-- Quick info -->
     <div class="card">

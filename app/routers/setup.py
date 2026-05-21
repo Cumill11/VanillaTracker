@@ -83,7 +83,6 @@ async def setup_post(
         first_name=first_name,
         last_name=last_name,
         password_hash=hash_password(password),
-        is_active=True,
         is_superuser=True,
     )
     db.add(user)

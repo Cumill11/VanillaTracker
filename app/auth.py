@@ -18,7 +18,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def authenticate(db: Session, username: str, password: str) -> User | None:
-    user = db.query(User).filter_by(username=username, is_active=True).first()
+    user = db.query(User).filter_by(username=username).first()
     if user and verify_password(password, user.password_hash):
         return user
     return None
@@ -36,7 +36,7 @@ def get_current_user(request: Request, db: Session) -> User | None:
     uid = request.session.get("user_id")
     if not uid:
         return None
-    return db.query(User).filter_by(id=uid, is_active=True).first()
+    return db.query(User).filter_by(id=uid).first()
 
 
 def require_user(request: Request, db: Session) -> User:

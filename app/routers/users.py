@@ -37,7 +37,6 @@ async def user_list(
     user=Depends(login_required),
     q: str = "",
     department: str = "",
-    active: str = "1",
     page: int = 1,
 ):
     base = ctx(request, db)
@@ -51,8 +50,6 @@ async def user_list(
         ))
     if department and department.isdigit():
         qs = qs.join(UserProfile).filter(UserProfile.department_id == int(department))
-    if active == "1":
-        qs = qs.filter(User.is_active == True)
     qs = qs.order_by(User.last_name, User.first_name)
     pagination = paginate(qs, page)
 
@@ -73,7 +70,6 @@ async def user_list(
         "departments": db.query(Department).order_by(Department.name).all(),
         "current_q": q,
         "current_dept": department,
-        "current_active": active,
     })
 
 
@@ -147,7 +143,6 @@ async def user_create_post(
         first_name=first_name.strip(),
         last_name=last_name.strip(),
         email=email.strip(),
-        is_active=True,
         password_hash=hash_password(password1) if can_login_bool else "",
     )
     db.add(new_user)
@@ -216,11 +211,9 @@ async def user_update_get(
         "first_name": edit_user.first_name,
         "last_name": edit_user.last_name,
         "email": edit_user.email,
-        "is_active": "1" if edit_user.is_active else "",
         "department_id": str(profile.department_id) if profile and profile.department_id else "",
         "position": profile.position if profile else "",
         "phone": profile.phone if profile else "",
-        "is_active_employee": "1" if (profile and profile.is_active_employee) else "",
     }
     return templates.TemplateResponse(request, "user_form.html", {
         **base,
@@ -239,11 +232,9 @@ async def user_update_post(
     first_name: str = Form(""),
     last_name: str = Form(""),
     email: str = Form(""),
-    is_active: str = Form(""),
     department_id: str = Form(""),
     position: str = Form(""),
     phone: str = Form(""),
-    is_active_employee: str = Form(""),
     csrf_token: str = Form(""),
 ):
     verify_csrf(request, csrf_token)
@@ -254,7 +245,6 @@ async def user_update_post(
     edit_user.first_name = first_name.strip()
     edit_user.last_name = last_name.strip()
     edit_user.email = email.strip()
-    edit_user.is_active = bool(is_active)
 
     profile = db.query(UserProfile).filter_by(user_id=pk).first()
     if not profile:
@@ -263,7 +253,6 @@ async def user_update_post(
     profile.department_id = int(department_id) if department_id else None
     profile.position = position.strip()
     profile.phone = phone.strip()
-    profile.is_active_employee = bool(is_active_employee)
     db.commit()
     add_message(request, "Użytkownik zaktualizowany.")
     return RedirectResponse("/users/", status_code=302)
@@ -334,3 +323,77 @@ async def user_password_post(
     db.commit()
     add_message(request, f"Hasło użytkownika {edit_user.get_full_name()} zostało zmienione.")
     return RedirectResponse(f"/users/{pk}/", status_code=302)
+
+
+# ── Delete ────────────────────────────────────────────────────────────────────
+
+def _delete_blockers(db: Session, pk: int) -> list[str]:
+    blockers = []
+    asset_count = db.query(Asset).filter(Asset.assigned_to_id == pk).count()
+    if asset_count:
+        blockers.append(f"przypisany sprzęt ({asset_count})")
+    license_count = (
+        db.query(License).filter(License.assigned_users.any(User.id == pk)).count()
+    )
+    if license_count:
+        blockers.append(f"przypisane licencje ({license_count})")
+    return blockers
+
+
+@router.get("/{pk}/delete/", name="user-delete")
+async def user_delete_get(
+    pk: int, request: Request,
+    db: Session = Depends(get_db),
+    user=Depends(login_required),
+):
+    edit_user = db.query(User).filter_by(id=pk).first()
+    if not edit_user:
+        return RedirectResponse("/users/", status_code=302)
+    if user.id == pk:
+        add_message(request, "Nie możesz usunąć własnego konta.")
+        return RedirectResponse(f"/users/{pk}/", status_code=302)
+    blockers = _delete_blockers(db, pk)
+    if blockers:
+        add_message(
+            request,
+            f"Nie można usunąć pracownika {edit_user.get_full_name()} — "
+            f"najpierw odepnij: {', '.join(blockers)}.",
+        )
+        return RedirectResponse(f"/users/{pk}/", status_code=302)
+    return templates.TemplateResponse(request, "confirm_delete.html", {
+        **ctx(request, db),
+        "object_name": edit_user.get_full_name(),
+        "cancel_url": f"/users/{pk}/",
+    })
+
+
+@router.post("/{pk}/delete/", name="user-delete-post")
+async def user_delete_post(
+    pk: int, request: Request,
+    db: Session = Depends(get_db),
+    user=Depends(login_required),
+    csrf_token: str = Form(""),
+):
+    verify_csrf(request, csrf_token)
+    edit_user = db.query(User).filter_by(id=pk).first()
+    if not edit_user:
+        return RedirectResponse("/users/", status_code=302)
+    if user.id == pk:
+        add_message(request, "Nie możesz usunąć własnego konta.")
+        return RedirectResponse(f"/users/{pk}/", status_code=302)
+    blockers = _delete_blockers(db, pk)
+    if blockers:
+        add_message(
+            request,
+            f"Nie można usunąć pracownika {edit_user.get_full_name()} — "
+            f"najpierw odepnij: {', '.join(blockers)}.",
+        )
+        return RedirectResponse(f"/users/{pk}/", status_code=302)
+
+    name = edit_user.get_full_name()
+    db.query(AssetHistory).filter_by(user_id=pk).update({"user_id": None})
+    db.query(AssetHistory).filter_by(performed_by_id=pk).update({"performed_by_id": None})
+    db.delete(edit_user)
+    db.commit()
+    add_message(request, f"Pracownik {name} został usunięty.")
+    return RedirectResponse("/users/", status_code=302)
