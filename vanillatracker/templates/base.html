@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}VanillaTracker{% endblock %} — VanillaTracker</title>
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='img/logo.svg') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
@@ -365,7 +365,7 @@
 <!-- Navigation Rail -->
 <nav class="nav-rail">
   <div class="logo" title="VanillaTracker">
-    <img src="{{ url_for('static', path='img/logo.svg') }}" alt="VanillaTracker">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="VanillaTracker">
   </div>
 
   <a href="{{ url_for('dashboard') }}" class="nav-item {% if active == 'dashboard' %}active{% endif %}" title="{{ t.nav_home }}">
@@ -380,10 +380,12 @@
     <span class="material-icons-round">key</span>
     <span class="label">{{ t.nav_licenses }}</span>
   </a>
+  {% if user and user.is_superuser %}
   <a href="{{ url_for('user-list') }}" class="nav-item {% if active == 'users' %}active{% endif %}" title="{{ t.nav_users }}">
     <span class="material-icons-round">group</span>
     <span class="label">{{ t.nav_users }}</span>
   </a>
+  {% endif %}
   <a href="{{ url_for('category-list') }}" class="nav-item {% if active == 'categories' %}active{% endif %}" title="{{ t.nav_types }}">
     <span class="material-icons-round">category</span>
     <span class="label">{{ t.nav_types }}</span>
@@ -392,8 +394,8 @@
   <div class="nav-spacer"></div>
 
   <div class="lang-switcher">
-    <a href="/lang/pl/?next={{ request.url.path }}" class="lang-btn {% if lang == 'pl' %}active{% endif %}">PL</a>
-    <a href="/lang/en/?next={{ request.url.path }}" class="lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
+    <a href="/lang/pl/?next={{ request.path }}" class="lang-btn {% if lang == 'pl' %}active{% endif %}">PL</a>
+    <a href="/lang/en/?next={{ request.path }}" class="lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
   </div>
 
   <form method="post" action="{{ url_for('logout') }}">
@@ -459,10 +461,12 @@
     <div class="nav-pill"><span class="material-icons-round">key</span></div>
     <span class="bnav-label">{{ t.nav_licenses }}</span>
   </a>
+  {% if user and user.is_superuser %}
   <a href="{{ url_for('user-list') }}" class="bottom-nav-item {% if active == 'users' %}active{% endif %}">
     <div class="nav-pill"><span class="material-icons-round">group</span></div>
     <span class="bnav-label">{{ t.nav_users }}</span>
   </a>
+  {% endif %}
   <a href="{{ url_for('category-list') }}" class="bottom-nav-item {% if active == 'categories' %}active{% endif %}">
     <div class="nav-pill"><span class="material-icons-round">category</span></div>
     <span class="bnav-label">{{ t.nav_types }}</span>

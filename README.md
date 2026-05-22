@@ -1,271 +1,235 @@
 # VanillaTracker
 
-System ewidencji sprzętu IT zbudowany na FastAPI. Umożliwia zarządzanie sprzętem, licencjami i użytkownikami z podziałem na działy.
-
-## Funkcje
-
-- Kreator pierwszego uruchomienia — tworzy konto administratora i konfiguruje prefiks numerów inwentarzowych
-- Ewidencja sprzętu z numerami IT-XXXXX (prefiks konfigurowalny) i kodami QR na etykietach PDF
-- Pola specyficzne dla kategorii: CPU/RAM/dysk (laptop, desktop), numer telefonu (telefon/tablet), tusz (drukarka)
-- Przypisywanie sprzętu do osoby lub działu z historią operacji
-- Zarządzanie licencjami (miejsca, daty wygaśnięcia, przypisanie do użytkowników)
-- Zarządzanie użytkownikami z podziałem na działy
-- Paginacja, filtrowanie i wyszukiwanie na wszystkich listach
-- Sesyjne komunikaty flash i ochrona CSRF
-- Interfejs w Material Design 3 (dark mode)
-- Przełącznik języka PL/EN — preferencja przechowywana w ciasteczku
-
-## Wymagania
-
-- Python 3.12+
-- Docker + Docker Compose (opcjonalnie)
-
-## Uruchomienie lokalnie
-
-```bash
-# Sklonuj repo i wejdź do folderu
-cd vanillatracker
-
-# Utwórz środowisko wirtualne
-python -m venv venv
-source venv/bin/activate
-
-# Zainstaluj zależności
-pip install -r requirements.txt
-
-# Utwórz plik .env
-cp .env.example .env
-# Uzupełnij SECRET_KEY w .env
-
-# Uruchom serwer
-uvicorn app.main:app --reload
-```
-
-Aplikacja dostępna pod `http://localhost:8000`. Przy pierwszym uruchomieniu kreator na `/setup/` poprowadzi przez tworzenie konta administratora i wybór prefiksu numerów inwentarzowych. Baza danych i tabele są tworzone automatycznie przy starcie.
-
-## Uruchomienie przez Docker
-
-```bash
-# Uzupełnij .env (skopiuj z .env.example i zmień hasła)
-cp .env.example .env
-
-# Uruchom
-docker compose up -d
-```
-
-Obraz pobierany z `ghcr.io/cumill11/vanilla-tracker:latest`. Przy pierwszym uruchomieniu kreator jest dostępny pod `http://localhost:8000/setup/`.
-
-## Konfiguracja (.env)
-
-| Zmienna | Opis | Domyślnie |
-|---|---|---|
-| `SECRET_KEY` | Klucz sesji — zmień przed wdrożeniem | *(brak)* |
-| `DATABASE_URL` | URL bazy danych | `sqlite:///./db.sqlite3` |
-| `DB_HOST` | Host MySQL/MariaDB | *(brak)* |
-| `DB_PORT` | Port MySQL/MariaDB | `3306` |
-| `DB_NAME` | Nazwa bazy | `vanillatracker` |
-| `DB_USER` | Użytkownik bazy | `root` |
-| `DB_PASSWORD` | Hasło użytkownika | *(brak)* |
-| `HTTPS_ONLY` | Wymusza HTTPS dla ciasteczka sesji | `false` |
-
-Jeśli ustawiony jest `DATABASE_URL`, pozostałe zmienne `DB_*` są ignorowane. Jeśli nie ustawiono żadnego, aplikacja używa SQLite.
-
-### Przykład dla MySQL
-
-```env
-SECRET_KEY=losowy-klucz-min-32-znaki
-DATABASE_URL=mysql+pymysql://user:haslo@localhost:3306/vanillatracker
-```
-
-### Przykład dla SQLite (dev)
-
-```env
-SECRET_KEY=losowy-klucz-min-32-znaki
-# DATABASE_URL nie jest potrzebne — SQLite używany domyślnie
-```
-
-## Testy
-
-```bash
-# Uruchom wszystkie testy
-python -m pytest tests/
-
-# Konkretny plik
-python -m pytest tests/test_assets.py
-
-# Zatrzymaj przy pierwszym błędzie
-python -m pytest tests/ -x
-```
-
-Testy używają osobnej bazy SQLite (`test_vanillatracker.db`) tworzonej i usuwanej automatycznie. Nie wymagają uruchomionej aplikacji ani zewnętrznej bazy.
-
-## Struktura projektu
-
-```
-app/
-├── main.py          # Aplikacja FastAPI, middleware, filtry Jinja2
-├── models.py        # Modele SQLAlchemy
-├── database.py      # Silnik bazy i sesja
-├── auth.py          # Haszowanie haseł, CSRF, autentykacja
-├── deps.py          # Zależności FastAPI (login_required, ctx)
-├── flash.py         # Komunikaty flash przez sesję
-├── i18n.py          # Słowniki tłumaczeń PL/EN i context processor
-├── pagination.py    # Paginacja zapytań
-├── label_pdf.py     # Generowanie etykiet PDF z QR
-└── routers/
-    ├── setup.py     # Kreator pierwszego uruchomienia
-    ├── auth.py      # Logowanie / wylogowanie
-    ├── dashboard.py # Strona główna
-    ├── assets.py    # CRUD sprzętu, przypisanie, etykiety
-    ├── licenses.py  # CRUD licencji, przypisanie użytkowników
-    ├── users.py     # CRUD użytkowników i haseł
-    └── categories.py# Kategorie i działy
-templates/           # Szablony Jinja2
-static/              # CSS, JS, ikony, logo
-tests/               # Testy pytest (69 testów)
-```
-
-## Bezpieczeństwo
-
-- Kreator pierwszego uruchomienia — aplikacja niedostępna bez konta admina
-- Tokeny CSRF weryfikowane na każdym żądaniu POST
-- Hasła haszowane bcryptem
-- Rate limiting logowania: 5 prób / 5 minut per IP
-- Ochrona przed open redirect przy przekierowaniu po logowaniu
-- `same_site=strict` na ciasteczku sesji
-- `https_only` konfigurowalny przez `HTTPS_ONLY=true`
-- Autoescape włączony w szablonach Jinja2
+[Polski](#polski) · [English](#english)
 
 ---
 
-# VanillaTracker (English)
+## Polski
 
-IT asset management system built with FastAPI. Manage hardware, licenses and users across departments.
+VanillaTracker to lekka aplikacja webowa do ewidencji sprzętu IT i licencji
+oprogramowania — inwentarz sprzętu, stanowiska licencyjne, pracownicy i działy,
+historia przypisań oraz etykiety QR do druku. Napisana we Flasku, działa zarówno
+na SQLite lokalnie, jak i na MariaDB/MySQL w środowisku produkcyjnym.
 
-## Features
+### Funkcje
 
-- First-run setup wizard — creates an admin account and configures the asset tag prefix
-- Asset tracking with customisable tag numbers (e.g. IT-00001) and QR code PDF labels
-- Category-specific fields: CPU/RAM/storage (laptop, desktop), phone number (phone/tablet), ink (printer)
-- Asset assignment to a person or department with full operation history
-- License management (seats, expiry dates, user assignments)
-- User management with department grouping
-- Pagination, filtering and search on all list views
-- Session flash messages and CSRF protection
-- Material Design 3 interface (dark mode)
-- PL/EN language switcher — preference stored in a cookie
+- **Sprzęt** — pełny inwentarz z kategoriami, statusem, gwarancją, danymi zakupu
+  i specyfikacją (CPU / RAM / dysk).
+- **Licencje** — licencje oprogramowania ze stanowiskami, terminami ważności
+  i przypisaniem do użytkowników.
+- **Ludzie i działy** — przypisywanie sprzętu do pracowników lub całych działów.
+- **Historia** — każde przypisanie, zwrot, zmiana statusu i notatka są rejestrowane.
+- **Etykiety QR** — generowanie etykiet PDF do druku (pojedynczo lub zbiorczo).
+- **Pulpit** — liczniki, kończące się gwarancje/licencje, ostatnia aktywność.
+- **Dwujęzyczny interfejs** — polski i angielski, przełączany w locie.
+- **Bezpieczeństwo** — hasła bcrypt, ochrona CSRF, limit prób logowania,
+  zarządzanie użytkownikami tylko dla administratora.
 
-## Requirements
+### Stos technologiczny
 
-- Python 3.12+
-- Docker + Docker Compose (optional)
+- Python 3.14 · Flask · SQLAlchemy
+- MariaDB / MySQL (produkcja) lub SQLite (tryb lokalny)
+- gunicorn (serwer WSGI) · Docker
 
-## Running locally
+### Struktura projektu
 
-```bash
-cd vanillatracker
-
-python -m venv venv
-source venv/bin/activate
-
-pip install -r requirements.txt
-
-cp .env.example .env
-# Set SECRET_KEY in .env
-
-uvicorn app.main:app --reload
+```
+vanillatrackerFlask/
+├── flask_app/
+│   ├── app.py            # trasy i logika aplikacji
+│   ├── database.py       # połączenie z bazą danych
+│   ├── models.py         # modele SQLAlchemy
+│   ├── i18n.py           # tłumaczenia PL / EN
+│   ├── label_pdf.py      # generowanie etykiet QR (PDF)
+│   ├── pagination.py     # pomocnik paginacji
+│   ├── requirements.txt
+│   ├── static/
+│   └── templates/
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example
+└── README.md
 ```
 
-Open `http://localhost:8000`. On first run the setup wizard at `/setup/` will guide you through creating an admin account and choosing a tag prefix. The database and tables are created automatically on startup.
+### Konfiguracja
 
-## Running with Docker
+Aplikacja czyta konfigurację z pliku `.env` w katalogu głównym projektu.
+Skopiuj szablon i uzupełnij wartości:
 
 ```bash
 cp .env.example .env
-# Fill in SECRET_KEY and database credentials
+```
 
+| Zmienna | Opis | Domyślnie |
+|---|---|---|
+| `SECRET_KEY` | Klucz sesji Flask — na produkcji wygeneruj losowy | *(niebezpieczna wartość domyślna)* |
+| `HTTPS_ONLY` | `true` oznacza cookie sesji jako `Secure` (przy HTTPS) | `false` |
+| `FLASK_DEBUG` | Tryb debug serwera dev — **nigdy `true` na produkcji** | `false` |
+| `FLASK_HOST` / `FLASK_PORT` | Adres nasłuchu dla `python app.py` | `0.0.0.0` / `8000` |
+| `DATABASE_URL` | Pełny URL bazy danych (ma pierwszeństwo nad `DB_*`) | — |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | Parametry połączenia MariaDB/MySQL | — |
+
+Jeśli nie ustawiono ani `DATABASE_URL`, ani `DB_HOST`, używana jest lokalna
+baza SQLite.
+
+Wygenerowanie klucza sesji:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### Uruchomienie lokalne
+
+```bash
+cd flask_app
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+Aplikacja jest dostępna pod adresem <http://localhost:8000>.
+
+### Uruchomienie w Dockerze
+
+Obraz Dockera uruchamia aplikację pod gunicornem (produkcyjny serwer WSGI).
+
+```bash
+# Zbuduj obraz
+docker build -t vanillatracker:latest .
+
+# Uruchom gotowy obraz
 docker compose up -d
 ```
 
-The image is pulled from `ghcr.io/cumill11/vanilla-tracker:latest`. The setup wizard is available at `http://localhost:8000/setup/` on first run.
+`docker-compose.yml` przekazuje konfigurację z pliku `.env` i udostępnia port
+`8000` (port na hoście można zmienić zmienną `HOST_PORT`).
 
-## Configuration (.env)
+### Pierwsze uruchomienie
+
+Przy pierwszym uruchomieniu aplikacja przekierowuje na `/setup/`, gdzie tworzysz
+konto administratora i wybierasz prefiks tagów sprzętu (np. `IT`, `BS`).
+Następnie zaloguj się przez `/login/`.
+
+### Baza danych
+
+Tabele tworzone są automatycznie przy starcie (`create_all`) — nie trzeba
+ręcznie wykonywać migracji. Istniejąca baza z wersji FastAPI tej aplikacji
+jest w pełni zgodna.
+
+---
+
+## English
+
+VanillaTracker is a lightweight web application for tracking IT assets and software
+licenses — hardware inventory, license seats, people and departments, assignment
+history, and printable QR labels. Built with Flask, it runs equally well on SQLite
+for local use or MariaDB/MySQL in production.
+
+### Features
+
+- **Assets** — full hardware inventory with categories, status, warranty, purchase
+  data and specs (CPU / RAM / storage).
+- **Licenses** — software licenses with seats, expiry tracking and per-user assignment.
+- **People & departments** — assign assets to employees or whole departments.
+- **History** — every assignment, return, status change and note is logged.
+- **QR labels** — generate printable PDF labels (single or bulk) for asset tags.
+- **Dashboard** — counts, expiring warranties/licenses, recent activity.
+- **Bilingual UI** — Polish and English, switchable on the fly.
+- **Security** — bcrypt passwords, CSRF protection, login rate limiting,
+  admin-only user management.
+
+### Tech stack
+
+- Python 3.14 · Flask · SQLAlchemy
+- MariaDB / MySQL (production) or SQLite (local fallback)
+- gunicorn (WSGI server) · Docker
+
+### Project layout
+
+```
+vanillatrackerFlask/
+├── flask_app/
+│   ├── app.py            # routes and application logic
+│   ├── database.py       # database connection
+│   ├── models.py         # SQLAlchemy models
+│   ├── i18n.py           # PL / EN translations
+│   ├── label_pdf.py      # QR label PDF generation
+│   ├── pagination.py     # pagination helper
+│   ├── requirements.txt
+│   ├── static/
+│   └── templates/
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
+
+### Configuration
+
+The application reads configuration from a `.env` file in the project root.
+Copy the template and adjust the values:
+
+```bash
+cp .env.example .env
+```
 
 | Variable | Description | Default |
 |---|---|---|
-| `SECRET_KEY` | Session secret key — change before deploying | *(none)* |
-| `DATABASE_URL` | Full database URL | `sqlite:///./db.sqlite3` |
-| `DB_HOST` | MySQL/MariaDB host | *(none)* |
-| `DB_PORT` | MySQL/MariaDB port | `3306` |
-| `DB_NAME` | Database name | `vanillatracker` |
-| `DB_USER` | Database user | `root` |
-| `DB_PASSWORD` | Database password | *(none)* |
-| `HTTPS_ONLY` | Enforce HTTPS for the session cookie | `false` |
+| `SECRET_KEY` | Flask session key — generate a random one for production | *(insecure default)* |
+| `HTTPS_ONLY` | `true` marks session cookies as `Secure` (use behind HTTPS) | `false` |
+| `FLASK_DEBUG` | Dev server debug mode — **never `true` in production** | `false` |
+| `FLASK_HOST` / `FLASK_PORT` | Bind address for `python app.py` | `0.0.0.0` / `8000` |
+| `DATABASE_URL` | Full database URL (takes precedence over `DB_*`) | — |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | MariaDB/MySQL connection parameters | — |
 
-If `DATABASE_URL` is set, all `DB_*` variables are ignored. If neither is set, SQLite is used.
+If neither `DATABASE_URL` nor `DB_HOST` is set, a local SQLite database is used.
 
-### MySQL example
-
-```env
-SECRET_KEY=random-key-min-32-chars
-DATABASE_URL=mysql+pymysql://user:password@localhost:3306/vanillatracker
-```
-
-### SQLite example (dev)
-
-```env
-SECRET_KEY=random-key-min-32-chars
-# DATABASE_URL not needed — SQLite is used by default
-```
-
-## Tests
+Generate a secret key:
 
 ```bash
-# Run all tests
-python -m pytest tests/
-
-# Single file
-python -m pytest tests/test_assets.py
-
-# Stop on first failure
-python -m pytest tests/ -x
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-Tests use a separate SQLite database (`test_vanillatracker.db`) that is created and deleted automatically. No running application or external database is required.
+### Running locally
 
-## Project structure
-
-```
-app/
-├── main.py          # FastAPI app, middleware, Jinja2 filters
-├── models.py        # SQLAlchemy models
-├── database.py      # Engine and session
-├── auth.py          # Password hashing, CSRF, authentication
-├── deps.py          # FastAPI dependencies (login_required, ctx)
-├── flash.py         # Session flash messages
-├── i18n.py          # PL/EN translation dictionaries and context processor
-├── pagination.py    # Query pagination
-├── label_pdf.py     # PDF label generation with QR codes
-└── routers/
-    ├── setup.py     # First-run setup wizard
-    ├── auth.py      # Login / logout
-    ├── dashboard.py # Home page
-    ├── assets.py    # Asset CRUD, assignment, labels
-    ├── licenses.py  # License CRUD, user assignment
-    ├── users.py     # User and password management
-    └── categories.py# Categories and departments
-templates/           # Jinja2 templates
-static/              # CSS, JS, icons, logo
-tests/               # pytest suite (69 tests)
+```bash
+cd flask_app
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py
 ```
 
-## Security
+The app is available at <http://localhost:8000>.
 
-- Setup wizard — the app is inaccessible until an admin account exists
-- CSRF tokens verified on every POST request
-- Passwords hashed with bcrypt
-- Login rate limiting: 5 attempts per 5 minutes per IP
-- Open redirect protection on post-login redirect
-- `same_site=strict` on the session cookie
-- `https_only` configurable via `HTTPS_ONLY=true`
-- Jinja2 autoescape enabled
+### Running with Docker
+
+The Docker image runs the app under gunicorn (production WSGI server).
+
+```bash
+# Build the image
+docker build -t vanillatracker:latest .
+
+# Run the pre-built image
+docker compose up -d
+```
+
+`docker-compose.yml` passes configuration from `.env` and exposes port `8000`
+(override the host port with the `HOST_PORT` variable).
+
+### First run
+
+On first launch the app redirects to `/setup/`, where you create the
+administrator account and choose the asset tag prefix (e.g. `IT`, `BS`).
+After that, log in at `/login/`.
+
+### Database
+
+Tables are created automatically on startup (`create_all`) — no manual
+migration step is required. An existing database from the FastAPI version of
+this app is fully compatible.
+
+---
+
+Autor / Author: Kamil Kowalczyk

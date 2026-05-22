@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VanillaTracker</title>
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='img/logo.svg') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
   <style>
@@ -48,14 +48,14 @@
 <body>
 <div class="setup-card">
   <div class="setup-logo">
-    <img src="{{ url_for('static', path='img/logo.svg') }}" alt="VanillaTracker">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="VanillaTracker">
   </div>
   <h1>{{ t.setup_title }}</h1>
   <p class="subtitle">{{ t.setup_subtitle }}</p>
 
   <div class="lang-row">
-    <a href="/lang/pl/?next={{ request.url.path }}" class="lang-lnk {% if lang == 'pl' %}active{% endif %}">PL</a>
-    <a href="/lang/en/?next={{ request.url.path }}" class="lang-lnk {% if lang == 'en' %}active{% endif %}">EN</a>
+    <a href="/lang/pl/?next={{ request.path }}" class="lang-lnk {% if lang == 'pl' %}active{% endif %}">PL</a>
+    <a href="/lang/en/?next={{ request.path }}" class="lang-lnk {% if lang == 'en' %}active{% endif %}">EN</a>
   </div>
 
   <div class="info-box">

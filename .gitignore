@@ -1,16 +1,15 @@
+# Środowisko
 .env
+
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.db
-*.sqlite3
+*.py[cod]
 venv/
 .venv/
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-*.log
-instance/
+
+# Baza danych
+db.sqlite3
+
+# IDE
+.vscode/
+.idea/

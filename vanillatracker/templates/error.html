@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.error_title }} {{ code }}{% endblock %}
+{% block page_title %}{{ t.error_title }} {{ code }}{% endblock %}
+
+{% block content %}
+<div style="max-width:500px">
+  <div class="card">
+    <div class="card-header">
+      <span class="material-icons-round" style="color:var(--md-error)">error_outline</span>
+      <h2>{{ code }} — {{ title }}</h2>
+    </div>
+    <div class="card-body">
+      <p style="margin-bottom:24px;color:var(--md-on-surface)">{{ message }}</p>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-filled">
+        <span class="material-icons-round">home</span> {{ t.error_btn_home }}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

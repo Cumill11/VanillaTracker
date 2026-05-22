@@ -1,7 +1,16 @@
 services:
   web:
     image: ghcr.io/cumill11/vanilla-tracker:latest
+    container_name: vanillatracker
     restart: unless-stopped
-    env_file: .env
+    # Zmienne (SECRET_KEY, DB_*, HTTPS_ONLY) wczytywane z pliku .env
+    env_file:
+      - .env
     ports:
-      - "8000:8000"
+      - "${HOST_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/login/')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

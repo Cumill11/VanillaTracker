@@ -1,11 +1,16 @@
-from datetime import datetime, date as date_type
+from datetime import datetime, timezone, date as date_type
 from decimal import Decimal
 from sqlalchemy import (
     Column, Integer, String, Text, Boolean, Date, Numeric,
     DateTime, ForeignKey, Table, func,
 )
 from sqlalchemy.orm import relationship
-from app.database import Base
+from database import Base
+
+
+def utcnow() -> datetime:
+    """Naiwny znacznik czasu UTC — zamiennik wycofanego datetime.utcnow."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 license_users = Table(
@@ -34,6 +39,13 @@ class TagPool(Base):
     tag_number = Column(Integer, unique=True, nullable=False)
 
 
+class LoginAttempt(Base):
+    __tablename__ = "login_attempts"
+    id = Column(Integer, primary_key=True)
+    ip = Column(String(64), nullable=False, index=True)
+    attempted_at = Column(DateTime, default=utcnow, nullable=False, index=True)
+
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
@@ -43,7 +55,7 @@ class User(Base):
     last_name = Column(String(150), default="")
     password_hash = Column(String(256), default="")
     is_superuser = Column(Boolean, default=False)
-    date_joined = Column(DateTime, default=datetime.utcnow)
+    date_joined = Column(DateTime, default=utcnow)
     last_login = Column(DateTime, nullable=True)
 
     profile = relationship(
@@ -140,8 +152,8 @@ class Asset(Base):
     storage = Column(String(200), default="")
     phone_number = Column(String(50), default="")
     ink_type = Column(String(200), default="")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     category = relationship("Category", back_populates="assets")
     assigned_to = relationship(
@@ -154,7 +166,6 @@ class Asset(Base):
         foreign_keys="AssetHistory.asset_id",
         cascade="all, delete-orphan",
     )
-
 
 
 class License(Base):
@@ -188,8 +199,8 @@ class License(Base):
     purchase_price = Column(Numeric(10, 2), nullable=True)
     status = Column(String(20), default="active", index=True)
     notes = Column(Text, default="")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     assigned_users = relationship(
         "User", secondary=license_users, back_populates="licenses",
@@ -231,10 +242,9 @@ class AssetHistory(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     performed_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     note = Column(Text, default="")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     asset = relationship("Asset", back_populates="history", foreign_keys=[asset_id])
     license = relationship("License", back_populates="history", foreign_keys=[license_id])
     user = relationship("User", foreign_keys=[user_id])
     performed_by = relationship("User", foreign_keys=[performed_by_id])
-

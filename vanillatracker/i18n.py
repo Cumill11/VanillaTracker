@@ -1,5 +1,4 @@
 from __future__ import annotations
-from fastapi import Request
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "pl": {
@@ -202,6 +201,16 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "setup_last_name": "Nazwisko",
         "setup_email": "E-mail",
         "setup_btn": "Utwórz administratora",
+        # Error pages
+        "error_title": "Błąd",
+        "error_unknown": "Wystąpił nieoczekiwany błąd.",
+        "error_btn_home": "Strona główna",
+        "error_403_title": "Brak dostępu",
+        "error_403_msg": "Brak uprawnień lub Twoja sesja wygasła. Odśwież stronę i spróbuj ponownie.",
+        "error_404_title": "Nie znaleziono strony",
+        "error_404_msg": "Strona, której szukasz, nie istnieje lub została przeniesiona.",
+        "error_429_title": "Zbyt wiele żądań",
+        "error_429_msg": "Zbyt wiele prób. Odczekaj kilka minut i spróbuj ponownie.",
     },
     "en": {
         # Navigation
@@ -403,16 +412,26 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "setup_last_name": "Last name",
         "setup_email": "E-mail",
         "setup_btn": "Create administrator",
+        # Error pages
+        "error_title": "Error",
+        "error_unknown": "An unexpected error occurred.",
+        "error_btn_home": "Home page",
+        "error_403_title": "Access denied",
+        "error_403_msg": "You don't have permission, or your session has expired. Refresh the page and try again.",
+        "error_404_title": "Page not found",
+        "error_404_msg": "The page you are looking for does not exist or has been moved.",
+        "error_429_title": "Too many requests",
+        "error_429_msg": "Too many attempts. Wait a few minutes and try again.",
     },
 }
 
 
-def get_t(request: Request) -> dict[str, str]:
+def get_t(request) -> dict[str, str]:
     lang = request.cookies.get("lang", "pl")
     return TRANSLATIONS.get(lang, TRANSLATIONS["pl"])
 
 
-def lang_context_processor(request: Request) -> dict:
+def lang_context_processor(request) -> dict:
     lang = request.cookies.get("lang", "pl")
     if lang not in TRANSLATIONS:
         lang = "pl"
