@@ -1,0 +1,51 @@
+---
+/** Dodawanie licencji — port tras `GET/POST /licenses/new/`. */
+import LicenseForm from '../../../components/LicenseForm.astro';
+import Base from '../../../layouts/Base.astro';
+import { nextTag, nowIso, tagPrefix } from '../../../lib/db';
+import { licenseForm, type LicenseFormData } from '../../../lib/entities';
+import { env } from '../../../lib/env';
+import type { Errors } from '../../../lib/forms';
+import { fmt } from '../../../lib/i18n';
+import { insertRow } from '../../../lib/sql';
+
+const { t, session, db } = Astro.locals;
+
+let data: LicenseFormData = licenseForm.empty();
+let errors: Errors = {};
+
+if (Astro.request.method === 'POST') {
+  data = licenseForm.read(Astro.locals.form);
+  errors = licenseForm.validate(data, t);
+
+  if (Object.keys(errors).length === 0) {
+    const { number, tag } = await nextTag(db, tagPrefix(env));
+    const now = nowIso();
+
+    const createdId = await insertRow(db, 'licenses', {
+      asset_tag: tag,
+      tag_number: number,
+      ...licenseForm.columns(data),
+      created_at: now,
+      updated_at: now,
+    });
+
+    if (createdId !== null) {
+      session.addMessage(fmt(t.msg_license_added, { tag }));
+      return Astro.redirect(`/licenses/${createdId}/`);
+    }
+  }
+
+  Astro.response.status = 400;
+}
+---
+
+<Base title={t.lic_form_new}>
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/licenses/">{t.nav_licenses}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{t.lic_form_new}</span>
+  </div>
+
+  <LicenseForm action="/licenses/new/" cancelHref="/licenses/" data={data} errors={errors} />
+</Base>

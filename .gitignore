@@ -1,15 +1,25 @@
-# Środowisko
+# Zależności i wyniki budowania
+node_modules/
+dist/
+.astro/
+.wrangler/
+
+# Sekrety lokalne
+.dev.vars
 .env
 
-# Python
-__pycache__/
-*.py[cod]
-venv/
-.venv/
+# Dane firmowe — repozytorium jest publiczne.
+# Zrzut ze starej bazy i wygenerowany z niego plik importu zawierają imiona,
+# nazwiska, adresy e-mail i telefony pracowników.
+/venicciasset.sql
+/import.sql
+*.dump.sql
 
-# Baza danych
+# Baza starej aplikacji na Flasku
 db.sqlite3
 
-# IDE
+# Narzędzia
+.DS_Store
+*.log
 .vscode/
 .idea/

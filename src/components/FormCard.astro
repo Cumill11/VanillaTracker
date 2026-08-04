@@ -1,0 +1,65 @@
+---
+/** Karta z nagłówkiem i siatką pól formularza. */
+interface Props {
+  title: string;
+  icon: string;
+  id?: string;
+  iconColor?: string;
+  /** Pola układane w siatkę; wyłącz dla pojedynczego pola. */
+  grid?: boolean;
+  /** Sekcja ukryta do czasu wyboru pasującej kategorii (specyfikacja sprzętu). */
+  hidden?: boolean;
+  /** Sekcja zwijana — nagłówek staje się przełącznikiem. */
+  collapsible?: boolean;
+  /** Czy zwijana sekcja ma być rozwinięta na starcie (gdy zawiera dane). */
+  open?: boolean;
+}
+
+const {
+  title,
+  icon,
+  id,
+  iconColor = 'var(--md-primary)',
+  grid = true,
+  hidden = false,
+  collapsible = false,
+  open = false,
+} = Astro.props;
+---
+
+{
+  collapsible ? (
+    <details class="card mb-20 card-collapsible" id={id} open={open}>
+      <summary class="card-header">
+        <span class="material-icons-round" style={`color:${iconColor}`}>
+          {icon}
+        </span>
+        <h2>{title}</h2>
+        <span class="material-icons-round card-chevron">expand_more</span>
+      </summary>
+      <div class="card-body">
+        <div class="form-grid">
+          <slot />
+        </div>
+      </div>
+    </details>
+  ) : (
+    <div class="card mb-20" id={id} style={hidden ? 'display:none' : undefined}>
+      <div class="card-header">
+        <span class="material-icons-round" style={`color:${iconColor}`}>
+          {icon}
+        </span>
+        <h2>{title}</h2>
+      </div>
+      <div class="card-body">
+        {grid ? (
+          <div class="form-grid">
+            <slot />
+          </div>
+        ) : (
+          <slot />
+        )}
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,31 @@
+---
+/**
+ * Etykieta z wartością w siatce szczegółów.
+ *
+ * Bez atrybutu `value` renderuje slot — dla wartości z własnym znacznikiem
+ * (odznaka kategorii, pasek stanowisk).
+ */
+interface Props {
+  label: string;
+  value?: string | number | null;
+  valueClass?: string;
+  /** Rozciąga pole na całą szerokość siatki. */
+  full?: boolean;
+}
+
+const { label, value, valueClass, full = false } = Astro.props;
+const classes = valueClass ? `field-value ${valueClass}` : 'field-value';
+---
+
+<div class="detail-field" style={full ? 'grid-column:1/-1' : undefined}>
+  <span class="field-label">{label}</span>
+  {
+    value === undefined ? (
+      <span class={classes}>
+        <slot />
+      </span>
+    ) : (
+      <span class={classes}>{value || '—'}</span>
+    )
+  }
+</div>

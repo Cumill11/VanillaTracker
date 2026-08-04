@@ -1,0 +1,85 @@
+---
+import type { HistoryWithRefs } from '../lib/db';
+import { formatDateTime } from '../lib/format';
+import { tk } from '../lib/i18n';
+
+interface Props {
+  items: HistoryWithRefs[];
+  /** Pokaż link do sprzętu, którego dotyczy wpis. */
+  showAsset?: boolean;
+  /** Pokaż link do licencji, której dotyczy wpis. */
+  showLicense?: boolean;
+  /** Pokaż osobę, do której przypisano sprzęt. */
+  showUser?: boolean;
+  /** Pokaż treść notatki. */
+  showNote?: boolean;
+}
+
+const {
+  items,
+  showAsset = false,
+  showLicense = false,
+  showUser = false,
+  showNote = true,
+} = Astro.props;
+const { t } = Astro.locals;
+
+const ICONS: Record<string, string> = {
+  assign: 'person_add',
+  return: 'undo',
+  maintenance: 'build',
+  assign_dept: 'business',
+};
+---
+
+<div class="timeline">
+  {
+    items.length === 0 ? (
+      <div class="empty-state" style="padding:20px">
+        <span class="material-icons-round" style="font-size:32px">
+          history
+        </span>
+        <p>{t.lbl_no_history}</p>
+      </div>
+    ) : (
+      items.map((h) => (
+        <div class="timeline-item">
+          <div class="timeline-dot">
+            <span class="material-icons-round">{ICONS[h.action] ?? 'edit_note'}</span>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-title">
+              {tk(t, `action_${h.action}`, h.action)}
+              {showAsset && h.asset_id && h.asset_tag && (
+                <>
+                  {' '}
+                  <a href={`/assets/${h.asset_id}/`}>{h.asset_tag}</a>
+                </>
+              )}
+              {showLicense && h.license_id && h.license_tag && (
+                <>
+                  {' '}
+                  <a href={`/licenses/${h.license_id}/`}>{h.license_tag}</a>
+                </>
+              )}
+              {showUser && h.user_id && (
+                <>
+                  {' → '}
+                  <a href={`/users/${h.user_id}/`}>
+                    {`${h.user_first_name ?? ''} ${h.user_last_name ?? ''}`.trim() || '—'}
+                  </a>
+                </>
+              )}
+            </div>
+            <div class="timeline-meta">{formatDateTime(h.created_at)}</div>
+            {showNote && h.note && (
+              <div class="text-sm text-muted" style="margin-top:2px">
+                {h.note}
+              </div>
+            )}
+          </div>
+        </div>
+      ))
+    )
+  }
+</div>

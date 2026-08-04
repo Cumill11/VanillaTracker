@@ -1,0 +1,46 @@
+---
+/** Edycja działu — port tras `GET/POST /departments/<pk>/edit/`. */
+import DepartmentForm from '../../../../components/DepartmentForm.astro';
+import Base from '../../../../layouts/Base.astro';
+import type { DepartmentRow } from '../../../../lib/db';
+import { field, parseId, type Errors } from '../../../../lib/forms';
+import { fmt } from '../../../../lib/i18n';
+
+const { t, session, db } = Astro.locals;
+
+const id = parseId(Astro.params.id);
+if (id === null) return Astro.redirect('/categories/');
+
+const department = await db
+  .prepare('SELECT id, name FROM departments WHERE id = ?')
+  .bind(id)
+  .first<DepartmentRow>();
+
+if (!department) return Astro.redirect('/categories/');
+
+let name = department.name;
+let errors: Errors = {};
+
+if (Astro.request.method === 'POST') {
+  name = field(Astro.locals.form, 'name');
+
+  if (!name.trim()) {
+    errors.name = [t.lbl_required];
+    Astro.response.status = 400;
+  } else {
+    await db.prepare('UPDATE departments SET name = ? WHERE id = ?').bind(name.trim(), id).run();
+    session.addMessage(fmt(t.msg_dept_updated, { name: name.trim() }));
+    return Astro.redirect('/categories/');
+  }
+}
+---
+
+<Base title={t.dept_form_edit}>
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/categories/">{t.nav_types}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{t.dept_form_edit}</span>
+  </div>
+
+  <DepartmentForm action={`/departments/${id}/edit/`} name={name} errors={errors} />
+</Base>

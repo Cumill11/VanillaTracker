@@ -1,0 +1,180 @@
+---
+/** Lista licencji — port `license_list.html`. */
+import Pagination from '../../components/Pagination.astro';
+import StatusChip from '../../components/StatusChip.astro';
+import Base from '../../layouts/Base.astro';
+import { LICENSE_STATUS_VALUES, type LicenseRow } from '../../lib/db';
+import { formatDate, seatsBarClass, seatsPercent } from '../../lib/format';
+import { likePattern } from '../../lib/forms';
+import { tk } from '../../lib/i18n';
+import { paginate, parsePage } from '../../lib/pagination';
+
+const { t, db } = Astro.locals;
+const params = Astro.url.searchParams;
+
+const q = params.get('q') ?? '';
+const status = params.get('status') ?? '';
+const page = parsePage(params.get('page'));
+
+const where: string[] = [];
+const args: unknown[] = [];
+
+if (q) {
+  const columns = ['l.asset_tag', 'l.name', 'l.vendor'];
+  where.push(`(${columns.map((c) => `${c} LIKE ? ESCAPE '\\'`).join(' OR ')})`);
+  for (let i = 0; i < columns.length; i++) args.push(likePattern(q));
+}
+if (status) {
+  where.push('l.status = ?');
+  args.push(status);
+}
+const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+type LicenseListRow = LicenseRow & { seats_used: number };
+
+const licenses = await paginate<LicenseListRow>(db, {
+  columns: `l.*, (SELECT COUNT(*) FROM license_users lu WHERE lu.license_id = l.id) AS seats_used`,
+  from: 'licenses l',
+  where: whereSql,
+  orderBy: 'l.tag_number',
+  args,
+  page,
+});
+
+const tagStyle =
+  'background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)';
+---
+
+<Base title={t.licenses_title}>
+  <a slot="top-actions" href="/licenses/new/" class="btn btn-filled btn-sm">
+    <span class="material-icons-round">add</span>
+    <span>{t.licenses_add}</span>
+  </a>
+
+  <form method="get" action="/licenses/">
+    <div class="filters-bar">
+      <div class="search-field">
+        <span class="material-icons-round">search</span>
+        <input
+          type="text"
+          name="q"
+          value={q}
+          placeholder={t.lbl_search}
+          oninput="debounceSearch(this)"
+        />
+      </div>
+      <select name="status" class="md3-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">{t.lbl_all_statuses}</option>
+        {
+          LICENSE_STATUS_VALUES.map((value) => (
+            <option value={value} selected={status === value}>
+              {tk(t, `status_${value}`, value)}
+            </option>
+          ))
+        }
+      </select>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="desktop-table">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{t.assets_col_tag}</th>
+            <th>{t.lbl_name}</th>
+            <th class="col-hide-sm">{t.lic_col_vendor}</th>
+            <th>{t.lbl_status}</th>
+            <th class="col-hide-sm">{t.lic_col_seats}</th>
+            <th class="col-hide-sm">{t.lic_col_expires}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            licenses.items.length === 0 ? (
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <span class="material-icons-round">key</span>
+                    <h3>{t.lic_empty}</h3>
+                    <p>
+                      <a href="/licenses/new/">{t.lic_add_first}</a>
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              licenses.items.map((lic) => {
+                const pct = seatsPercent(lic.seats_used, lic.seats);
+                return (
+                  <tr>
+                    <td>
+                      <a href={`/licenses/${lic.id}/`} class="asset-tag" style={tagStyle}>
+                        {lic.asset_tag}
+                      </a>
+                    </td>
+                    <td>
+                      <a href={`/licenses/${lic.id}/`} style="color:var(--md-on-surface)">
+                        {lic.name}
+                      </a>
+                    </td>
+                    <td class="col-hide-sm">{lic.vendor || '—'}</td>
+                    <td>
+                      <StatusChip status={lic.status} />
+                    </td>
+                    <td class="col-hide-sm">
+                      {lic.seats_used}/{lic.seats}
+                      <div class="seats-bar" style="width:80px">
+                        <div
+                          class={`seats-bar-fill ${seatsBarClass(pct)}`}
+                          style={`width:${pct}%`}
+                        />
+                      </div>
+                    </td>
+                    <td class="col-hide-sm">{formatDate(lic.expiry_date)}</td>
+                    <td>
+                      <a href={`/licenses/${lic.id}/edit/`} class="btn-icon" title={t.btn_edit}>
+                        <span class="material-icons-round">edit</span>
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })
+            )
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mobile-card-list">
+      {
+        licenses.items.length === 0 ? (
+          <div class="empty-state">
+            <span class="material-icons-round">key</span>
+            <h3>{t.lic_empty}</h3>
+          </div>
+        ) : (
+          licenses.items.map((lic) => (
+            <a href={`/licenses/${lic.id}/`} class="mob-list-item">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+                <span class="asset-tag" style={tagStyle}>
+                  {lic.asset_tag}
+                </span>
+                <StatusChip status={lic.status} />
+              </div>
+              <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">
+                {lic.name}
+              </div>
+              <div class="text-sm text-muted">
+                {lic.vendor} · {lic.seats_used}/{lic.seats} {t.lic_col_seats.toLowerCase()}
+              </div>
+            </a>
+          ))
+        )
+      }
+    </div>
+
+    <Pagination page={licenses} filters={{ q, status }} />
+  </div>
+</Base>

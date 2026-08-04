@@ -1,0 +1,35 @@
+---
+/** Dodawanie działu — port tras `GET/POST /departments/new/`. */
+import DepartmentForm from '../../../components/DepartmentForm.astro';
+import Base from '../../../layouts/Base.astro';
+import { field, type Errors } from '../../../lib/forms';
+import { fmt } from '../../../lib/i18n';
+
+const { t, session, db } = Astro.locals;
+
+let name = '';
+let errors: Errors = {};
+
+if (Astro.request.method === 'POST') {
+  name = field(Astro.locals.form, 'name');
+
+  if (!name.trim()) {
+    errors.name = [t.lbl_required];
+    Astro.response.status = 400;
+  } else {
+    await db.prepare('INSERT INTO departments (name) VALUES (?)').bind(name.trim()).run();
+    session.addMessage(fmt(t.msg_dept_added, { name: name.trim() }));
+    return Astro.redirect('/categories/');
+  }
+}
+---
+
+<Base title={t.dept_form_new}>
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/categories/">{t.nav_types}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{t.dept_form_new}</span>
+  </div>
+
+  <DepartmentForm action="/departments/new/" name={name} errors={errors} />
+</Base>

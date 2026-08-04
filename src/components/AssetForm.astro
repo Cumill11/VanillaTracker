@@ -1,0 +1,168 @@
+---
+/** Formularz sprzętu — port `asset_form.html`, wspólny dla dodawania i edycji. */
+import FormCard from './FormCard.astro';
+import FormField from './FormField.astro';
+import FormShell from './FormShell.astro';
+import { fullName, type CategoryRow, type UserRow } from '../lib/db';
+import type { AssetFormData } from '../lib/entities';
+import type { Errors } from '../lib/forms';
+import { tk } from '../lib/i18n';
+
+interface Props {
+  action: string;
+  cancelHref: string;
+  categories: CategoryRow[];
+  data: AssetFormData;
+  errors: Errors;
+  /** Lista osób włącza pole „przypisz od razu" (tylko przy dodawaniu). */
+  users?: Pick<UserRow, 'id' | 'first_name' | 'last_name'>[];
+  assignUserId?: string;
+}
+
+const { action, cancelHref, categories, data, errors, users, assignUserId = '' } = Astro.props;
+const { t } = Astro.locals;
+
+// Dane zakupu bywają wypełniane rzadko, więc sekcja jest zwinięta — chyba że
+// edytowany sprzęt już coś w niej ma.
+const hasPurchaseData = Boolean(
+  data.purchase_date || data.purchase_price || data.warranty_expiry,
+);
+
+const categorySlugs = Object.fromEntries(categories.map((c) => [String(c.id), c.slug]));
+---
+
+<FormShell action={action} cancelHref={cancelHref} maxWidth={800}>
+  <FormCard title={t.asset_form_title} icon="devices">
+    <FormField
+      label={t.asset_mfr}
+      name="manufacturer"
+      value={data.manufacturer}
+      errors={errors.manufacturer}
+      required
+    />
+    <FormField
+      label={t.asset_model}
+      name="model_name"
+      value={data.model_name}
+      errors={errors.model_name}
+      required
+    />
+    <FormField
+      label={t.asset_category}
+      name="category_id"
+      id="id_category"
+      errors={errors.category}
+      required
+    >
+      <select id="id_category" name="category_id" class="md3-select">
+        <option value="">{t.lbl_select}</option>
+        {
+          categories.map((cat) => (
+            <option value={cat.id} selected={data.category_id === String(cat.id)}>
+              {tk(t, `cat_${cat.slug}`, cat.name)}
+            </option>
+          ))
+        }
+      </select>
+    </FormField>
+    <FormField label={t.asset_serial} name="serial_number" value={data.serial_number} />
+    {
+      users && (
+        <FormField label={t.asset_assign_now} name="assign_user_id">
+          <select id="f-assign_user_id" name="assign_user_id" class="md3-select">
+            <option value="">{t.lbl_none}</option>
+            {users.map((user) => (
+              <option value={user.id} selected={assignUserId === String(user.id)}>
+                {fullName(user)}
+              </option>
+            ))}
+          </select>
+        </FormField>
+      )
+    }
+    <FormField label={t.lbl_notes} name="notes" value={data.notes} rows={3} full />
+  </FormCard>
+
+  <FormCard title={t.asset_purchase_section} icon="receipt_long" collapsible open={hasPurchaseData}>
+    <FormField
+      label={t.asset_purchase_date}
+      name="purchase_date"
+      type="date"
+      value={data.purchase_date}
+    />
+    <FormField
+      label={t.asset_purchase_price}
+      name="purchase_price"
+      type="number"
+      step="0.01"
+      value={data.purchase_price}
+    />
+    <FormField
+      label={t.asset_warranty}
+      name="warranty_expiry"
+      type="date"
+      value={data.warranty_expiry}
+    />
+  </FormCard>
+
+  <FormCard title={t.asset_spec_computer} icon="memory" id="section-computer" hidden>
+    <FormField
+      label={t.asset_cpu}
+      name="cpu"
+      value={data.cpu}
+      placeholder="np. Intel Core i7-1260P"
+      full
+    />
+    <FormField label={t.asset_ram} name="ram" value={data.ram} placeholder="np. 16 GB DDR5" />
+    <FormField
+      label={t.asset_storage}
+      name="storage"
+      value={data.storage}
+      placeholder="np. 512 GB SSD NVMe"
+    />
+  </FormCard>
+
+  <FormCard title={t.asset_spec_phone} icon="smartphone" id="section-phone" hidden>
+    <FormField
+      label={t.asset_phone_number}
+      name="phone_number"
+      value={data.phone_number}
+      placeholder="np. +48 123 456 789"
+    />
+  </FormCard>
+
+  <FormCard title={t.asset_spec_printer} icon="print" id="section-printer" hidden>
+    <FormField
+      label={t.asset_ink_type}
+      name="ink_type"
+      value={data.ink_type}
+      placeholder="np. HP 305XL (3YM62AE)"
+      full
+    />
+  </FormCard>
+</FormShell>
+
+<script id="cat-slugs" type="application/json" set:html={JSON.stringify(categorySlugs)} is:inline
+></script>
+<script is:inline>
+  (function () {
+    var select = document.getElementById('id_category');
+    if (!select) return;
+    var slugs = JSON.parse(document.getElementById('cat-slugs').textContent);
+    var groups = {
+      'section-computer': ['laptop', 'desktop'],
+      'section-phone': ['phone', 'tablet'],
+      'section-printer': ['printer'],
+    };
+
+    function updateSections() {
+      var slug = slugs[select.value] || '';
+      Object.keys(groups).forEach(function (id) {
+        document.getElementById(id).style.display = groups[id].indexOf(slug) >= 0 ? '' : 'none';
+      });
+    }
+
+    select.addEventListener('change', updateSections);
+    updateSections();
+  })();
+</script>

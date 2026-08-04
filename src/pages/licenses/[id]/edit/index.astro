@@ -1,0 +1,54 @@
+---
+/** Edycja licencji — port tras `GET/POST /licenses/<pk>/edit/`. */
+import LicenseForm from '../../../../components/LicenseForm.astro';
+import Base from '../../../../layouts/Base.astro';
+import { nowIso, type LicenseRow } from '../../../../lib/db';
+import { licenseForm } from '../../../../lib/entities';
+import { parseId, type Errors } from '../../../../lib/forms';
+import { fmt } from '../../../../lib/i18n';
+import { updateRow } from '../../../../lib/sql';
+
+const { t, session, db } = Astro.locals;
+
+const id = parseId(Astro.params.id);
+if (id === null) return Astro.redirect('/licenses/');
+
+const license = await db
+  .prepare('SELECT * FROM licenses WHERE id = ?')
+  .bind(id)
+  .first<LicenseRow>();
+if (!license) return Astro.redirect('/licenses/');
+
+let data = licenseForm.fromRow(license);
+let errors: Errors = {};
+
+if (Astro.request.method === 'POST') {
+  data = licenseForm.read(Astro.locals.form);
+  errors = licenseForm.validate(data, t);
+
+  if (Object.keys(errors).length === 0) {
+    await updateRow(db, 'licenses', { ...licenseForm.columns(data), updated_at: nowIso() }, id);
+    session.addMessage(fmt(t.msg_license_updated, { tag: license.asset_tag }));
+    return Astro.redirect(`/licenses/${id}/`);
+  }
+
+  Astro.response.status = 400;
+}
+---
+
+<Base title={t.lic_form_edit}>
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/licenses/">{t.nav_licenses}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <a href={`/licenses/${id}/`}>{license.asset_tag}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{t.lic_form_edit}</span>
+  </div>
+
+  <LicenseForm
+    action={`/licenses/${id}/edit/`}
+    cancelHref={`/licenses/${id}/`}
+    data={data}
+    errors={errors}
+  />
+</Base>

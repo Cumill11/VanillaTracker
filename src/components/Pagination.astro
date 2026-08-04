@@ -1,0 +1,37 @@
+---
+import { pageHref, type Page } from '../lib/pagination';
+
+interface Props {
+  page: Page<unknown>;
+  /** Filtry przenoszone do linków (q, status, sort…). */
+  filters?: Record<string, string | number>;
+}
+
+const { page, filters = {} } = Astro.props;
+const pages = Array.from({ length: page.numPages }, (_, i) => i + 1);
+---
+
+{
+  page.numPages > 1 && (
+    <div class="pagination">
+      {page.hasPrev && (
+        <a href={pageHref(filters, page.page - 1)} class="page-btn">
+          <span class="material-icons-round">chevron_left</span>
+        </a>
+      )}
+      {pages.map((p) => (
+        <a
+          href={pageHref(filters, p)}
+          class={`page-btn ${p === page.page ? 'current' : ''}`}
+        >
+          {p}
+        </a>
+      ))}
+      {page.hasNext && (
+        <a href={pageHref(filters, page.page + 1)} class="page-btn">
+          <span class="material-icons-round">chevron_right</span>
+        </a>
+      )}
+    </div>
+  )
+}

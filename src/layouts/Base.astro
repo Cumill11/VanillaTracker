@@ -1,0 +1,166 @@
+---
+import '../styles/app.css';
+
+/**
+ * Layout aplikacji — port `base.html`.
+ *
+ * Sloty: `top-actions` (przyciski w pasku górnym), `breadcrumb`, `extra-js`
+ * oraz slot domyślny na treść strony.
+ */
+interface Props {
+  title: string;
+  pageTitle?: string;
+}
+
+const { title, pageTitle = title } = Astro.props;
+const { session, t } = Astro.locals;
+
+const csrfToken = session.csrfToken;
+const messages = session.takeMessages();
+const path = Astro.url.pathname;
+
+const active = path.startsWith('/assets')
+  ? 'assets'
+  : path.startsWith('/licenses')
+    ? 'licenses'
+    : path.startsWith('/users')
+      ? 'users'
+      : path.startsWith('/categories') || path.startsWith('/departments')
+        ? 'categories'
+        : 'dashboard';
+
+const year = new Date().getFullYear();
+
+const navItems = [
+  { href: '/', key: 'dashboard', icon: 'dashboard', label: t.nav_home },
+  { href: '/assets/', key: 'assets', icon: 'devices', label: t.nav_assets },
+  { href: '/licenses/', key: 'licenses', icon: 'key', label: t.nav_licenses },
+  { href: '/users/', key: 'users', icon: 'group', label: t.nav_users },
+  { href: '/categories/', key: 'categories', icon: 'category', label: t.nav_types },
+];
+---
+
+<!doctype html>
+<html lang="pl" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} — VanillaTracker</title>
+    <link rel="icon" type="image/svg+xml" href="/img/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  </head>
+  <body>
+    <nav class="nav-rail">
+      <div class="logo" title="VanillaTracker">
+        <img src="/img/logo.svg" alt="VanillaTracker" />
+      </div>
+
+      {
+        navItems.map((item) => (
+          <a
+            href={item.href}
+            class={`nav-item ${active === item.key ? 'active' : ''}`}
+            title={item.label}
+          >
+            <span class="material-icons-round">{item.icon}</span>
+            <span class="label">{item.label}</span>
+          </a>
+        ))
+      }
+
+      <div class="nav-spacer"></div>
+
+      <form method="post" action="/logout/">
+        <input type="hidden" name="csrf_token" value={csrfToken} />
+        <button type="submit" class="nav-item" title={t.nav_logout}>
+          <span class="material-icons-round">logout</span>
+          <span class="label">{t.nav_logout}</span>
+        </button>
+      </form>
+
+      <div
+        style="font-size:9px;color:var(--md-on-surface-variant);opacity:.35;text-align:center;padding:8px 4px 4px;letter-spacing:.3px;line-height:1.4"
+      >
+        © {year}<br />Kamil Kowalczyk
+      </div>
+    </nav>
+
+    <div class="main-content">
+      <div class="top-bar">
+        <h1>{pageTitle}</h1>
+        <div class="flex items-center gap-8">
+          <slot name="top-actions" />
+          <span class="text-muted text-sm top-bar-username">Administrator</span>
+          <div class="avatar">A</div>
+        </div>
+      </div>
+
+      <div class="page">
+        <slot name="breadcrumb" />
+        <slot />
+      </div>
+    </div>
+
+    {
+      messages.length > 0 && (
+        <div class="messages-container" id="messages-container">
+          {messages.map((msg) => (
+            <div class="snackbar">
+              <span>{msg}</span>
+              <button
+                type="button"
+                class="btn-icon snackbar-close"
+                style="width:24px;height:24px;flex-shrink:0"
+              >
+                <span class="material-icons-round" style="font-size:16px">
+                  close
+                </span>
+              </button>
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    <nav class="bottom-nav">
+      {
+        navItems.map((item) => (
+          <a href={item.href} class={`bottom-nav-item ${active === item.key ? 'active' : ''}`}>
+            <div class="nav-pill">
+              <span class="material-icons-round">{item.icon}</span>
+            </div>
+            <span class="bnav-label">{item.label}</span>
+          </a>
+        ))
+      }
+    </nav>
+
+    <slot name="extra-js" />
+
+    <script is:inline>
+      document.querySelectorAll('.snackbar-close').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          btn.parentElement.remove();
+        });
+      });
+      setTimeout(function () {
+        var box = document.getElementById('messages-container');
+        if (box) box.remove();
+      }, 4000);
+
+      window._searchTimer = null;
+      window.debounceSearch = function (input) {
+        clearTimeout(window._searchTimer);
+        window._searchTimer = setTimeout(function () {
+          input.form.submit();
+        }, 500);
+      };
+    </script>
+  </body>
+</html>

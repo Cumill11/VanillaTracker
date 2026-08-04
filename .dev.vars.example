@@ -1,0 +1,11 @@
+# Konfiguracja lokalna dla `astro dev` / `wrangler dev`.
+# Skopiuj jako `.dev.vars` (plik jest w .gitignore).
+# Na produkcji te same wartości ustawiasz przez `wrangler secret put <NAZWA>`.
+
+# Login i hasło administratora — jedyne konto, które może się zalogować.
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="zmien-mnie"
+
+# Klucz podpisujący ciasteczko sesji. Wygeneruj przez:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+SESSION_SECRET="zmien-mnie-na-losowy-ciag"

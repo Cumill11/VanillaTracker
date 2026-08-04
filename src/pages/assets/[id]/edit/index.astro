@@ -1,0 +1,61 @@
+---
+/** Edycja sprzętu — port tras `GET/POST /assets/<pk>/edit/`. */
+import AssetForm from '../../../../components/AssetForm.astro';
+import Base from '../../../../layouts/Base.astro';
+import { nowIso, type AssetRow, type CategoryRow } from '../../../../lib/db';
+import { assetForm } from '../../../../lib/entities';
+import { parseId, type Errors } from '../../../../lib/forms';
+import { fmt } from '../../../../lib/i18n';
+import { updateRow } from '../../../../lib/sql';
+
+const { t, session, db } = Astro.locals;
+
+const id = parseId(Astro.params.id);
+if (id === null) return Astro.redirect('/assets/');
+
+// Jedno okrążenie do bazy zamiast dwóch — kategorie i tak są potrzebne przy
+// renderowaniu formularza.
+const [assetResult, categoriesResult] = await db.batch([
+  db.prepare('SELECT * FROM assets WHERE id = ?').bind(id),
+  db.prepare('SELECT id, name, slug FROM categories ORDER BY name'),
+]);
+
+const asset = (assetResult.results as AssetRow[])[0];
+if (!asset) return Astro.redirect('/assets/');
+
+const categories = categoriesResult.results as CategoryRow[];
+
+let data = assetForm.fromRow(asset);
+let errors: Errors = {};
+
+if (Astro.request.method === 'POST') {
+  data = assetForm.read(Astro.locals.form);
+  errors = assetForm.validate(data, t);
+
+  if (Object.keys(errors).length === 0) {
+    await updateRow(db, 'assets', { ...assetForm.columns(data), updated_at: nowIso() }, id);
+    session.addMessage(fmt(t.msg_asset_updated, { tag: asset.asset_tag }));
+    return Astro.redirect(`/assets/${id}/`);
+  }
+
+  Astro.response.status = 400;
+}
+---
+
+<Base title={t.asset_form_edit}>
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/assets/">{t.nav_assets}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <a href={`/assets/${id}/`}>{asset.asset_tag}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{t.asset_form_edit}</span>
+  </div>
+
+  <AssetForm
+    action={`/assets/${id}/edit/`}
+    cancelHref={`/assets/${id}/`}
+    categories={categories}
+    data={data}
+    errors={errors}
+  />
+</Base>

@@ -1,0 +1,129 @@
+---
+/** Typy: kategorie sprzętu i działy — port `category_list.html`. */
+import Base from '../../layouts/Base.astro';
+import type { CategoryRow, DepartmentRow } from '../../lib/db';
+import { categoryIcon } from '../../lib/format';
+import { tk } from '../../lib/i18n';
+
+const { t, db } = Astro.locals;
+
+const [categoriesResult, departmentsResult] = await db.batch([
+  db.prepare(
+    `SELECT c.id, c.name, c.slug, COUNT(a.id) AS asset_count
+       FROM categories c
+       LEFT JOIN assets a ON a.category_id = c.id
+      GROUP BY c.id
+      ORDER BY c.name`,
+  ),
+  db.prepare(
+    `SELECT d.id, d.name, COUNT(u.id) AS user_count
+       FROM departments d
+       LEFT JOIN users u ON u.department_id = d.id
+      GROUP BY d.id
+      ORDER BY d.name`,
+  ),
+]);
+
+const categories = categoriesResult.results as (CategoryRow & { asset_count: number })[];
+const departments = departmentsResult.results as (DepartmentRow & { user_count: number })[];
+---
+
+<Base title={t.types_title}>
+  <div class="types-grid">
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">category</span>
+        <h2>{t.types_categories}</h2>
+      </div>
+      {
+        categories.length > 0 ? (
+          <div class="card-body" style="padding:0">
+            {categories.map((cat) => (
+              <div style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--md-outline-variant)">
+                <div style="width:40px;height:40px;flex-shrink:0;border-radius:var(--radius-sm);background:var(--md-primary-container);display:flex;align-items:center;justify-content:center">
+                  <span
+                    class="material-icons-round"
+                    style="font-size:20px;color:var(--md-on-primary-container)"
+                  >
+                    {categoryIcon(cat.slug)}
+                  </span>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14px;font-weight:500;color:var(--md-on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                    {tk(t, `cat_${cat.slug}`, cat.name)}
+                  </div>
+                  <div class="text-xs text-muted font-mono">{cat.slug}</div>
+                </div>
+                <a
+                  href={`/assets/?category=${cat.id}`}
+                  class="asset-tag"
+                  style="font-size:12px;flex-shrink:0"
+                >
+                  {cat.asset_count}
+                </a>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state" style="padding:40px 24px">
+            <span class="material-icons-round">category</span>
+            <h3>{t.types_no_categories}</h3>
+          </div>
+        )
+      }
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-secondary)">apartment</span>
+        <h2>{t.types_depts}</h2>
+        <a href="/departments/new/" class="btn-icon" title={t.types_add_dept}>
+          <span class="material-icons-round" style="color:var(--md-secondary)">add</span>
+        </a>
+      </div>
+      {
+        departments.length > 0 ? (
+          <div class="card-body" style="padding:0">
+            {departments.map((dept) => (
+              <div style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--md-outline-variant)">
+                <div style="width:40px;height:40px;flex-shrink:0;border-radius:var(--radius-sm);background:var(--md-secondary-container);display:flex;align-items:center;justify-content:center">
+                  <span
+                    class="material-icons-round"
+                    style="font-size:20px;color:var(--md-on-secondary-container)"
+                  >
+                    business
+                  </span>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">
+                    {dept.name}
+                  </div>
+                </div>
+                <a
+                  href={`/users/?department=${dept.id}`}
+                  class="asset-tag"
+                  style="font-size:12px;flex-shrink:0;background:var(--md-secondary-container);color:var(--md-on-secondary-container)"
+                >
+                  {dept.user_count}
+                </a>
+                <a href={`/departments/${dept.id}/edit/`} class="btn-icon" title={t.btn_edit}>
+                  <span class="material-icons-round" style="font-size:18px">
+                    edit
+                  </span>
+                </a>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state" style="padding:40px 24px">
+            <span class="material-icons-round">apartment</span>
+            <h3>{t.types_no_depts}</h3>
+            <p>
+              <a href="/departments/new/">{t.types_add_dept}</a>
+            </p>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</Base>

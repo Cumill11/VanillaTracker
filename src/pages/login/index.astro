@@ -1,0 +1,162 @@
+---
+import '../../styles/app.css';
+
+/** Logowanie administratora — port `login.html` + tras `/login/`. */
+import { adminConfigured, authenticateAdmin, checkRateLimit, clearRateLimit, clientIp } from '../../lib/auth';
+import { renderErrorPage } from '../../lib/errorPage';
+import { env } from '../../lib/env';
+import { field, safeRedirect } from '../../lib/forms';
+
+const { session, t, db } = Astro.locals;
+
+if (session.isAdmin) return Astro.redirect('/');
+
+let errorMessage = '';
+let username = '';
+let nextUrl = Astro.url.searchParams.get('next') ?? '';
+
+if (Astro.request.method === 'POST') {
+  const form = Astro.locals.form;
+  username = field(form, 'username');
+  const password = field(form, 'password');
+  nextUrl = field(form, 'next');
+
+  const ip = clientIp(Astro.request);
+  if (!(await checkRateLimit(db, ip))) return renderErrorPage(429);
+
+  if (!adminConfigured(env)) {
+    errorMessage = t.login_not_configured;
+    Astro.response.status = 500;
+  } else if (await authenticateAdmin(env, username, password)) {
+    await clearRateLimit(db, ip);
+    session.login();
+    return Astro.redirect(safeRedirect(nextUrl));
+  } else {
+    errorMessage = t.login_invalid;
+    Astro.response.status = 400;
+  }
+}
+
+const csrfToken = session.csrfToken;
+---
+
+<!doctype html>
+<html lang="pl" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VanillaTracker</title>
+    <link rel="icon" type="image/svg+xml" href="/img/logo.svg" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <style is:global>
+      /* Reszta stylów pochodzi z globalnego `app.css` — tu tylko układ
+         wyśrodkowanej karty logowania. Selektory z klasą `login-page`
+         wygrywają specyficznością nad regułami `body` z arkusza. */
+      body.login-page {
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+      .login-card {
+        background: var(--md-surface-container);
+        border-radius: var(--radius-xl);
+        padding: 40px 32px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: var(--elev-3);
+      }
+      .login-logo {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        overflow: hidden;
+      }
+      .login-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .login-page h1 {
+        font-size: 24px;
+        font-weight: 400;
+        color: var(--md-on-surface);
+        text-align: center;
+        margin-bottom: 8px;
+      }
+      .login-page .subtitle {
+        font-size: 14px;
+        color: var(--md-on-surface-variant);
+        text-align: center;
+        margin-bottom: 32px;
+      }
+      .login-page .form-group {
+        margin-bottom: 20px;
+      }
+      .login-page .btn-filled {
+        width: 100%;
+        padding: 14px 24px;
+        font-size: 15px;
+      }
+      .error-box {
+        background: rgba(242, 184, 181, 0.1);
+        border: 1px solid rgba(242, 184, 181, 0.3);
+        border-radius: var(--radius-sm);
+        padding: 12px 16px;
+        color: var(--md-error);
+        font-size: 13px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body class="login-page">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="/img/logo.svg" alt="VanillaTracker" />
+      </div>
+      <h1>VanillaTracker</h1>
+      <p class="subtitle">{t.login_subtitle}</p>
+
+      {errorMessage && <div class="error-box">{errorMessage}</div>}
+
+      <form method="post" action="/login/">
+        <input type="hidden" name="csrf_token" value={csrfToken} />
+        {nextUrl && <input type="hidden" name="next" value={nextUrl} />}
+
+        <div class="form-group">
+          <label for="username">{t.login_username}</label>
+          <input
+            id="username"
+            type="text"
+            name="username"
+            class="md3-input"
+            value={username}
+            autocomplete="username"
+            autofocus
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">{t.login_password}</label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            class="md3-input"
+            autocomplete="current-password"
+          />
+        </div>
+        <button type="submit" class="btn-filled">
+          <span class="material-icons-round">login</span>
+          {t.login_btn}
+        </button>
+      </form>
+    </div>
+  </body>
+</html>

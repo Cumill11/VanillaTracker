@@ -1,0 +1,80 @@
+---
+/**
+ * Pole formularza: etykieta, kontrolka i lista błędów.
+ *
+ * Bez slotu renderuje `input` (albo `textarea`, gdy podano `rows`). Slot służy
+ * do kontrolek z własną treścią — wtedy podaj `id` zgodne z kontrolką, żeby
+ * etykieta dalej ją wskazywała.
+ */
+interface Props {
+  label: string;
+  name: string;
+  value?: string;
+  type?: 'text' | 'email' | 'date' | 'number';
+  id?: string;
+  required?: boolean;
+  /** Rozciąga pole na całą szerokość siatki. */
+  full?: boolean;
+  placeholder?: string;
+  step?: string;
+  min?: string;
+  autofocus?: boolean;
+  /** Dodatkowa klasa kontrolki (np. `font-mono`). */
+  inputClass?: string;
+  /** Liczba wierszy — zamienia pole na `textarea`. */
+  rows?: number;
+  errors?: string[];
+}
+
+const {
+  label,
+  name,
+  value = '',
+  type = 'text',
+  id = `f-${name}`,
+  required = false,
+  full = false,
+  placeholder,
+  step,
+  min,
+  autofocus = false,
+  inputClass,
+  rows,
+  errors,
+} = Astro.props;
+
+const controlClass = inputClass ? `md3-input ${inputClass}` : 'md3-input';
+---
+
+<div class="form-group" style={full ? 'grid-column:1/-1' : undefined}>
+  <label for={id}>{label}{required && <span class="req">*</span>}</label>
+  {
+    Astro.slots.has('default') ? (
+      <slot />
+    ) : rows ? (
+      // Bez łamania wiersza: treść `textarea` to dokładnie wartość pola.
+      <textarea id={id} name={name} class={controlClass} rows={rows} set:text={value} />
+    ) : (
+      <input
+        id={id}
+        type={type}
+        name={name}
+        class={controlClass}
+        value={value}
+        placeholder={placeholder}
+        step={step}
+        min={min}
+        autofocus={autofocus}
+      />
+    )
+  }
+  {
+    errors && (
+      <ul class="errorlist">
+        {errors.map((e) => (
+          <li>{e}</li>
+        ))}
+      </ul>
+    )
+  }
+</div>

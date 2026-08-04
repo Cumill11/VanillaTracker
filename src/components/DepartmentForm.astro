@@ -1,0 +1,22 @@
+---
+/** Formularz działu — port `department_form.html`. */
+import FormCard from './FormCard.astro';
+import FormField from './FormField.astro';
+import FormShell from './FormShell.astro';
+import type { Errors } from '../lib/forms';
+
+interface Props {
+  action: string;
+  name: string;
+  errors: Errors;
+}
+
+const { action, name, errors } = Astro.props;
+const { t } = Astro.locals;
+---
+
+<FormShell action={action} cancelHref="/categories/" maxWidth={500}>
+  <FormCard title={t.dept_form_title} icon="apartment" iconColor="var(--md-secondary)" grid={false}>
+    <FormField label={t.lbl_name} name="name" value={name} errors={errors.name} required autofocus />
+  </FormCard>
+</FormShell>

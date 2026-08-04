@@ -1,0 +1,75 @@
+---
+/** Szybka zmiana statusu — port `GET/POST /assets/<pk>/status/` i `confirm_status.html`. */
+import Base from '../../../../layouts/Base.astro';
+import {
+  HISTORY_ACTION,
+  addHistory,
+  assetName,
+  nowIso,
+  type AssetRow,
+} from '../../../../lib/db';
+import { field, parseId } from '../../../../lib/forms';
+import { fmt, tk } from '../../../../lib/i18n';
+import { QUICK_STATUS_NOTES, STATUS_QUESTION_KEYS } from '../../../../lib/notes';
+
+const { t, session, db } = Astro.locals;
+
+const id = parseId(Astro.params.id);
+if (id === null) return Astro.redirect('/assets/');
+
+const detailUrl = `/assets/${id}/`;
+
+const asset = await db
+  .prepare('SELECT id, asset_tag, manufacturer, model_name, status, assigned_to_id FROM assets WHERE id = ?')
+  .bind(id)
+  .first<Pick<AssetRow, 'id' | 'asset_tag' | 'manufacturer' | 'model_name' | 'status' | 'assigned_to_id'>>();
+
+if (!asset) return Astro.redirect('/assets/');
+
+if (Astro.request.method === 'POST') {
+  const status = field(Astro.locals.form, 'status');
+  const note = QUICK_STATUS_NOTES[status];
+
+  // Sprzętu przypisanego do osoby nie da się przełączyć — trzeba go najpierw zwrócić.
+  if (note && !asset.assigned_to_id && asset.status !== status) {
+    await db.batch([
+      db.prepare('UPDATE assets SET status = ?, updated_at = ? WHERE id = ?').bind(status, nowIso(), id),
+      addHistory(db, { asset_id: id, action: HISTORY_ACTION.STATUS, note }),
+    ]);
+    session.addMessage(fmt(t.msg_asset_status_changed, { tag: asset.asset_tag, note }));
+  }
+
+  return Astro.redirect(detailUrl);
+}
+
+const newStatus = Astro.url.searchParams.get('status') ?? '';
+const questionKey = STATUS_QUESTION_KEYS[newStatus];
+if (!questionKey || asset.assigned_to_id) return Astro.redirect(detailUrl);
+---
+
+<Base title={t.asset_status_title}>
+  <div style="max-width:500px">
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">build</span>
+        <h2>{t.asset_status_title}</h2>
+      </div>
+      <div class="card-body">
+        <p style="margin-bottom:24px;color:var(--md-on-surface)">
+          {tk(t, questionKey, '')} <strong>{asset.asset_tag} — {assetName(asset)}</strong>
+        </p>
+        <form method="post" action={`/assets/${id}/status/`}>
+          <input type="hidden" name="csrf_token" value={session.csrfToken} />
+          <input type="hidden" name="status" value={newStatus} />
+          <div class="flex gap-12">
+            <button type="submit" class="btn btn-filled">
+              <span class="material-icons-round">check</span>
+              {t.btn_confirm}
+            </button>
+            <a href={detailUrl} class="btn btn-outlined">{t.btn_cancel}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</Base>

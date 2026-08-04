@@ -1,0 +1,48 @@
+---
+/** Dodawanie osoby — port tras `GET/POST /users/new/`. */
+import UserForm from '../../../components/UserForm.astro';
+import Base from '../../../layouts/Base.astro';
+import { fullName, nowIso, type DepartmentRow } from '../../../lib/db';
+import { userForm, type UserFormData } from '../../../lib/entities';
+import type { Errors } from '../../../lib/forms';
+import { fmt } from '../../../lib/i18n';
+import { insertRow } from '../../../lib/sql';
+
+const { t, session, db } = Astro.locals;
+
+let data: UserFormData = userForm.empty();
+let errors: Errors = {};
+
+if (Astro.request.method === 'POST') {
+  data = userForm.read(Astro.locals.form);
+  errors = userForm.validate(data, t);
+
+  if (Object.keys(errors).length === 0) {
+    await insertRow(db, 'users', { ...userForm.columns(data), created_at: nowIso() });
+    session.addMessage(fmt(t.msg_user_added, { name: fullName(data) }));
+    return Astro.redirect('/users/');
+  }
+
+  Astro.response.status = 400;
+}
+
+const { results: departments } = await db
+  .prepare('SELECT id, name FROM departments ORDER BY name')
+  .all<DepartmentRow>();
+---
+
+<Base title={t.user_form_new}>
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/users/">{t.nav_users}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{t.user_form_new}</span>
+  </div>
+
+  <UserForm
+    action="/users/new/"
+    cancelHref="/users/"
+    departments={departments ?? []}
+    data={data}
+    errors={errors}
+  />
+</Base>

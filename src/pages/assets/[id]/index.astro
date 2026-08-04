@@ -1,0 +1,386 @@
+---
+/** Szczegóły sprzętu — port `asset_detail.html`. */
+import HistoryTimeline from '../../../components/HistoryTimeline.astro';
+import StatusChip from '../../../components/StatusChip.astro';
+import Field from '../../../components/Field.astro';
+import Base from '../../../layouts/Base.astro';
+import {
+  ASSET_STATUS,
+  assetName,
+  fullName,
+  initials,
+  todayIso,
+  type AssetRow,
+  type DepartmentRow,
+  type HistoryWithRefs,
+  type UserRow,
+} from '../../../lib/db';
+import { categoryIcon, formatDate, formatDateTime, formatPrice } from '../../../lib/format';
+import { parseId } from '../../../lib/forms';
+import { tk } from '../../../lib/i18n';
+
+const { t, session, db } = Astro.locals;
+
+const id = parseId(Astro.params.id);
+if (id === null) return Astro.redirect('/assets/');
+
+type AssetDetail = AssetRow & {
+  category_name: string | null;
+  category_slug: string | null;
+  assigned_first_name: string | null;
+  assigned_last_name: string | null;
+  assigned_email: string | null;
+  department_name: string | null;
+};
+
+// Wszystko, czego potrzebuje strona, w jednym okrążeniu do bazy.
+const [assetResult, historyResult, usersResult, departmentsResult] = await db.batch([
+  db
+    .prepare(
+      `SELECT a.*, c.name AS category_name, c.slug AS category_slug,
+              u.first_name AS assigned_first_name, u.last_name AS assigned_last_name,
+              u.email AS assigned_email, d.name AS department_name
+         FROM assets a
+         LEFT JOIN categories c  ON c.id = a.category_id
+         LEFT JOIN users u       ON u.id = a.assigned_to_id
+         LEFT JOIN departments d ON d.id = a.department_id
+        WHERE a.id = ?`,
+    )
+    .bind(id),
+  db
+    .prepare(
+      `SELECT h.*, NULL AS asset_tag, NULL AS license_tag,
+              u.first_name AS user_first_name, u.last_name AS user_last_name
+         FROM asset_history h
+         LEFT JOIN users u ON u.id = h.user_id
+        WHERE h.asset_id = ?
+        ORDER BY h.created_at DESC, h.id DESC`,
+    )
+    .bind(id),
+  // Do listy wyboru wystarczą imię, nazwisko i identyfikator.
+  db.prepare('SELECT id, first_name, last_name FROM users ORDER BY last_name, first_name'),
+  db.prepare('SELECT id, name FROM departments ORDER BY name'),
+]);
+
+const asset = (assetResult.results as AssetDetail[])[0];
+if (!asset) return Astro.redirect('/assets/');
+
+const history = historyResult.results as HistoryWithRefs[];
+const users = usersResult.results as Pick<UserRow, 'id' | 'first_name' | 'last_name'>[];
+const departments = departmentsResult.results as DepartmentRow[];
+
+const assignedName = fullName({
+  first_name: asset.assigned_first_name ?? '',
+  last_name: asset.assigned_last_name ?? '',
+});
+const price = formatPrice(asset.purchase_price);
+const today = todayIso();
+const showStatusCard = (
+  [ASSET_STATUS.AVAILABLE, ASSET_STATUS.MAINTENANCE, ASSET_STATUS.RETIRED] as string[]
+).includes(asset.status);
+---
+
+<Base title={asset.asset_tag}>
+  <Fragment slot="top-actions">
+    <a href={`/assets/${id}/label/`} class="btn btn-outlined btn-sm" target="_blank">
+      <span class="material-icons-round">label</span>
+      <span>{t.asset_label_pdf}</span>
+    </a>
+    <a href={`/assets/new/?clone=${id}`} class="btn btn-outlined btn-sm" title={t.asset_clone}>
+      <span class="material-icons-round">content_copy</span>
+      <span>{t.asset_clone}</span>
+    </a>
+    <a href={`/assets/${id}/edit/`} class="btn btn-tonal btn-sm">
+      <span class="material-icons-round">edit</span>
+      <span>{t.btn_edit}</span>
+    </a>
+  </Fragment>
+
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/assets/">{t.nav_assets}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{asset.asset_tag}</span>
+  </div>
+
+  <div class="detail-grid">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="card">
+        <div class="card-body">
+          <div class="flex items-center gap-16 mb-20">
+            <div
+              style="width:60px;height:60px;border-radius:var(--radius-lg);background:var(--md-primary-container);display:flex;align-items:center;justify-content:center"
+            >
+              <span
+                class="material-icons-round"
+                style="font-size:32px;color:var(--md-on-primary-container)"
+                >{categoryIcon(asset.category_slug)}</span
+              >
+            </div>
+            <div>
+              <div style="font-size:24px;font-weight:400;color:var(--md-on-surface)">
+                {assetName(asset)}
+              </div>
+              <div class="flex items-center gap-8" style="margin-top:4px">
+                <span class="asset-tag">{asset.asset_tag}</span>
+                <StatusChip status={asset.status} />
+              </div>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <Field label={t.asset_category} valueClass="category-badge">
+              {
+                asset.category_slug ? (
+                  <>
+                    <span class="material-icons-round">{categoryIcon(asset.category_slug)}</span>
+                    {tk(t, `cat_${asset.category_slug}`, asset.category_name ?? '')}
+                  </>
+                ) : (
+                  '—'
+                )
+              }
+            </Field>
+            <Field label={t.asset_mfr} value={asset.manufacturer} />
+            <Field label={t.asset_model} value={asset.model_name} />
+            <Field label={t.asset_serial} value={asset.serial_number} valueClass="font-mono" />
+            <Field label={t.asset_purchase_date} value={formatDate(asset.purchase_date)} />
+            <Field label={t.asset_purchase_price} value={price} />
+            <Field label={t.asset_warranty} value={formatDate(asset.warranty_expiry)} />
+            {
+              asset.notes && (
+                <Field label={t.lbl_notes} value={asset.notes} full />
+              )
+            }
+            {
+              asset.cpu && (
+                <Field label={t.asset_cpu} value={asset.cpu} />
+              )
+            }
+            {
+              asset.ram && (
+                <Field label={t.asset_ram} value={asset.ram} />
+              )
+            }
+            {
+              asset.storage && (
+                <Field label={t.asset_storage} value={asset.storage} />
+              )
+            }
+            {
+              asset.phone_number && (
+                <Field label={t.asset_phone_number} value={asset.phone_number} />
+              )
+            }
+            {
+              asset.ink_type && (
+                <Field label={t.asset_ink_type} value={asset.ink_type} full />
+              )
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="material-icons-round" style="color:var(--md-primary)">history</span>
+          <h2>{t.lbl_history}</h2>
+        </div>
+        <div class="card-body">
+          <HistoryTimeline items={history} showUser />
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-header">
+          <span class="material-icons-round" style="color:var(--md-primary)">person</span>
+          <h2>{t.asset_assign_title}</h2>
+        </div>
+        <div class="card-body">
+          {
+            asset.assigned_to_id ? (
+              <>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                  <div class="avatar avatar-lg">
+                    {initials({
+                      first_name: asset.assigned_first_name ?? '',
+                      last_name: asset.assigned_last_name ?? '',
+                    })}
+                  </div>
+                  <div>
+                    <div style="font-size:16px;font-weight:500;color:var(--md-on-surface)">
+                      <a href={`/users/${asset.assigned_to_id}/`}>{assignedName}</a>
+                    </div>
+                    <div class="text-sm text-muted">{asset.assigned_email}</div>
+                    {asset.assigned_date && (
+                      <div class="text-xs text-muted">
+                        {t.asset_since} {formatDate(asset.assigned_date)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <form method="post" action={`/assets/${id}/return/`}>
+                  <input type="hidden" name="csrf_token" value={session.csrfToken} />
+                  <div class="form-group mb-16">
+                    <label for="return-note">{t.asset_note}</label>
+                    <textarea id="return-note" name="note" class="md3-input" rows="2" />
+                  </div>
+                  <button type="submit" class="btn btn-outlined" style="width:100%">
+                    <span class="material-icons-round">undo</span>
+                    {t.asset_return_btn}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <p class="text-muted text-sm mb-16">{t.asset_not_assigned}</p>
+                {asset.status === ASSET_STATUS.AVAILABLE ? (
+                  <form method="post" action={`/assets/${id}/assign/`}>
+                    <input type="hidden" name="csrf_token" value={session.csrfToken} />
+                    <div class="form-group mb-16">
+                      <label for="assign-user">{t.asset_user}</label>
+                      <select id="assign-user" name="assign_user_id" class="md3-select">
+                        <option value="">{t.lbl_select}</option>
+                        {users.map((u) => (
+                          <option value={u.id}>{fullName(u)}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div class="form-group mb-16">
+                      <label for="assign-date">{t.asset_assign_date}</label>
+                      <input
+                        id="assign-date"
+                        type="date"
+                        name="assigned_date"
+                        class="md3-input"
+                        value={today}
+                      />
+                    </div>
+                    <div class="form-group mb-16">
+                      <label for="assign-note">{t.asset_note}</label>
+                      <textarea id="assign-note" name="note" class="md3-input" rows="2" />
+                    </div>
+                    <button type="submit" class="btn btn-filled" style="width:100%">
+                      <span class="material-icons-round">person_add</span>
+                      {t.asset_assign_btn}
+                    </button>
+                  </form>
+                ) : (
+                  <p class="text-muted text-xs">{t.asset_change_status_hint}</p>
+                )}
+              </>
+            )
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="material-icons-round" style="color:var(--md-primary)">business</span>
+          <h2>{t.asset_dept_title}</h2>
+        </div>
+        <div class="card-body">
+          {
+            asset.department_name ? (
+              <div style="font-size:15px;font-weight:500;color:var(--md-on-surface);margin-bottom:16px">
+                <span
+                  class="material-icons-round"
+                  style="font-size:16px;vertical-align:-3px;margin-right:4px"
+                >
+                  business
+                </span>
+                {asset.department_name}
+              </div>
+            ) : (
+              <p class="text-muted text-sm mb-16">{t.asset_no_dept}</p>
+            )
+          }
+          <form method="post" action={`/assets/${id}/assign-dept/`}>
+            <input type="hidden" name="csrf_token" value={session.csrfToken} />
+            <div class="form-group mb-16">
+              <label class="sr-only" for="dept-select" style="display:none">
+                {t.asset_dept_title}
+              </label>
+              <select id="dept-select" name="department_id" class="md3-select">
+                <option value="">{t.lbl_none}</option>
+                {
+                  departments.map((dept) => (
+                    <option value={dept.id} selected={asset.department_id === dept.id}>
+                      {dept.name}
+                    </option>
+                  ))
+                }
+              </select>
+            </div>
+            <button type="submit" class="btn btn-tonal btn-sm" style="width:100%">
+              <span class="material-icons-round">save</span>
+              {t.asset_dept_btn}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {
+        showStatusCard && (
+          <div class="card">
+            <div class="card-header">
+              <span class="material-icons-round" style="color:var(--md-primary)">
+                build
+              </span>
+              <h2>{t.asset_status_title}</h2>
+            </div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+              {asset.status !== ASSET_STATUS.AVAILABLE && (
+                <form method="post" action={`/assets/${id}/status/`}>
+                  <input type="hidden" name="csrf_token" value={session.csrfToken} />
+                  <input type="hidden" name="status" value={ASSET_STATUS.AVAILABLE} />
+                  <button type="submit" class="btn btn-tonal btn-sm" style="width:100%">
+                    <span class="material-icons-round">check_circle</span>
+                    {t.asset_status_to_available}
+                  </button>
+                </form>
+              )}
+              {asset.status !== ASSET_STATUS.MAINTENANCE && (
+                <a
+                  href={`/assets/${id}/status/?status=maintenance`}
+                  class="btn btn-outlined btn-sm"
+                  style="width:100%"
+                >
+                  <span class="material-icons-round">build</span>
+                  {t.asset_status_to_maintenance}
+                </a>
+              )}
+              {asset.status !== ASSET_STATUS.RETIRED && (
+                <a
+                  href={`/assets/${id}/status/?status=retired`}
+                  class="btn btn-outlined btn-sm"
+                  style="width:100%"
+                >
+                  <span class="material-icons-round">archive</span>
+                  {t.asset_status_to_retired}
+                </a>
+              )}
+            </div>
+          </div>
+        )
+      }
+
+      <div class="card">
+        <div class="card-header">
+          <span class="material-icons-round" style="color:var(--md-primary)">info</span>
+          <h2>{t.lbl_info}</h2>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+          <Field label={t.lbl_created} value={formatDateTime(asset.created_at)} valueClass="text-sm" />
+          <Field label={t.lbl_updated} value={formatDateTime(asset.updated_at)} valueClass="text-sm" />
+        </div>
+      </div>
+
+      <a href={`/assets/${id}/delete/`} class="btn btn-error" style="width:100%;justify-content:center">
+        <span class="material-icons-round">delete</span>
+        {t.asset_delete}
+      </a>
+    </div>
+  </div>
+</Base>

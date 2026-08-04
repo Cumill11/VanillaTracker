@@ -1,0 +1,19 @@
+---
+import { statusColor } from '../lib/format';
+import { tk } from '../lib/i18n';
+
+interface Props {
+  status: string;
+}
+
+const { status } = Astro.props;
+const { t } = Astro.locals;
+
+const color = statusColor(status);
+const label = tk(t, `status_${status}`, status);
+---
+
+<span
+  class="status-chip"
+  style={`background:${color}20;color:${color};border:1px solid ${color}40`}>{label}</span
+>

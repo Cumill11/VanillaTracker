@@ -1,0 +1,172 @@
+---
+/** Szczegóły licencji — port `license_detail.html`. */
+import HistoryTimeline from '../../../components/HistoryTimeline.astro';
+import StatusChip from '../../../components/StatusChip.astro';
+import Field from '../../../components/Field.astro';
+import Base from '../../../layouts/Base.astro';
+import { fullName, initials, type HistoryWithRefs, type LicenseRow, type UserRow } from '../../../lib/db';
+import { formatDate, formatDateTime, formatPrice, seatsBarClass, seatsPercent } from '../../../lib/format';
+import { parseId } from '../../../lib/forms';
+
+const { t, session, db } = Astro.locals;
+
+const id = parseId(Astro.params.id);
+if (id === null) return Astro.redirect('/licenses/');
+
+const [licenseResult, historyResult, usersResult, assignedResult] = await db.batch([
+  db.prepare('SELECT * FROM licenses WHERE id = ?').bind(id),
+  db
+    .prepare(
+      `SELECT h.*, NULL AS asset_tag, NULL AS license_tag,
+              NULL AS user_first_name, NULL AS user_last_name
+         FROM asset_history h
+        WHERE h.license_id = ?
+        ORDER BY h.created_at DESC, h.id DESC`,
+    )
+    .bind(id),
+  db.prepare('SELECT id, first_name, last_name FROM users ORDER BY last_name, first_name'),
+  db.prepare('SELECT user_id FROM license_users WHERE license_id = ?').bind(id),
+]);
+
+const license = (licenseResult.results as LicenseRow[])[0];
+if (!license) return Astro.redirect('/licenses/');
+
+const history = historyResult.results as HistoryWithRefs[];
+const users = usersResult.results as Pick<UserRow, 'id' | 'first_name' | 'last_name'>[];
+const assignedIds = new Set((assignedResult.results as { user_id: number }[]).map((r) => r.user_id));
+
+const seatsUsed = assignedIds.size;
+const pct = seatsPercent(seatsUsed, license.seats);
+const price = formatPrice(license.purchase_price);
+const tagStyle = 'background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)';
+---
+
+<Base title={license.asset_tag}>
+  <a slot="top-actions" href={`/licenses/${id}/edit/`} class="btn btn-tonal btn-sm">
+    <span class="material-icons-round">edit</span>
+    <span>{t.btn_edit}</span>
+  </a>
+
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/licenses/">{t.nav_licenses}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{license.asset_tag}</span>
+  </div>
+
+  <div class="detail-grid">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="card">
+        <div class="card-body">
+          <div class="flex items-center gap-16 mb-20">
+            <div
+              style="width:60px;height:60px;border-radius:var(--radius-lg);background:var(--md-tertiary-container);display:flex;align-items:center;justify-content:center"
+            >
+              <span
+                class="material-icons-round"
+                style="font-size:32px;color:var(--md-on-tertiary-container)">key</span
+              >
+            </div>
+            <div>
+              <div style="font-size:24px;font-weight:400;color:var(--md-on-surface)">
+                {license.name}
+              </div>
+              <div class="flex items-center gap-8" style="margin-top:4px">
+                <span class="asset-tag" style={tagStyle}>{license.asset_tag}</span>
+                <StatusChip status={license.status} />
+              </div>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <Field label={t.lic_vendor} value={license.vendor} />
+            <Field label={t.lic_col_seats}>
+              {seatsUsed}/{license.seats}
+              <div class="seats-bar">
+                <div class={`seats-bar-fill ${seatsBarClass(pct)}`} style={`width:${pct}%`}></div>
+              </div>
+            </Field>
+            <Field label={t.lic_purchase_date} value={formatDate(license.purchase_date)} />
+            <Field label={t.lic_expiry_date} value={formatDate(license.expiry_date)} />
+            <Field label={t.lic_purchase_price} value={price} />
+            {
+              license.license_key && (
+                <Field
+                  label={t.lic_key}
+                  value={license.license_key}
+                  valueClass="font-mono text-sm"
+                  full
+                />
+              )
+            }
+            {
+              license.notes && (
+                <Field label={t.lbl_notes} value={license.notes} full />
+              )
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="material-icons-round" style="color:var(--md-primary)">history</span>
+          <h2>{t.lbl_history}</h2>
+        </div>
+        <div class="card-body">
+          <HistoryTimeline items={history} />
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-header">
+          <span class="material-icons-round" style="color:var(--md-primary)">group</span>
+          <h2>{t.lic_assigned_users}</h2>
+        </div>
+        <div class="card-body">
+          <form method="post" action={`/licenses/${id}/assign/`}>
+            <input type="hidden" name="csrf_token" value={session.csrfToken} />
+            <div class="user-checkbox-list mb-16">
+              {
+                users.map((u) => (
+                  <label class="user-checkbox-item">
+                    <input type="checkbox" name="users" value={u.id} checked={assignedIds.has(u.id)} />
+                    <div class="avatar" style="width:32px;height:32px;font-size:13px">
+                      {initials(u)}
+                    </div>
+                    <span style="font-size:14px;color:var(--md-on-surface)">{fullName(u)}</span>
+                  </label>
+                ))
+              }
+            </div>
+            <button type="submit" class="btn btn-filled" style="width:100%">
+              <span class="material-icons-round">save</span>
+              {t.lic_save_assignment}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="material-icons-round" style="color:var(--md-primary)">info</span>
+          <h2>{t.lbl_info}</h2>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+          <Field label={t.lbl_created} value={formatDateTime(license.created_at)} valueClass="text-sm" />
+          <Field label={t.lbl_updated} value={formatDateTime(license.updated_at)} valueClass="text-sm" />
+        </div>
+      </div>
+
+      <a
+        href={`/licenses/${id}/delete/`}
+        class="btn btn-error"
+        style="width:100%;justify-content:center"
+      >
+        <span class="material-icons-round">delete</span>
+        {t.lic_delete}
+      </a>
+    </div>
+  </div>
+</Base>

@@ -1,0 +1,228 @@
+---
+/** Dashboard — port `dashboard.html`. */
+import HistoryTimeline from '../components/HistoryTimeline.astro';
+import Base from '../layouts/Base.astro';
+import {
+  ASSET_STATUS,
+  LICENSE_STATUS,
+  addDaysIso,
+  assetName,
+  todayIso,
+  type CategoryRow,
+  type HistoryWithRefs,
+} from '../lib/db';
+import { categoryIcon, formatDate } from '../lib/format';
+import { tk } from '../lib/i18n';
+
+const { t, db } = Astro.locals;
+
+const today = todayIso();
+const in60Days = addDaysIso(60);
+
+type AssetStats = {
+  total: number;
+  assigned: number;
+  available: number;
+  maintenance: number;
+};
+type CategoryWithCount = CategoryRow & { asset_count: number };
+type ExpiringAsset = {
+  id: number;
+  asset_tag: string;
+  manufacturer: string;
+  model_name: string;
+  warranty_expiry: string;
+};
+type ExpiringLicense = { id: number; asset_tag: string; name: string; expiry_date: string };
+
+const [assetStats, otherStats, categories, warranties, licenses, history] = await db.batch([
+  db.prepare(
+    `SELECT COUNT(*) AS total,
+            COALESCE(SUM(status = ?), 0) AS assigned,
+            COALESCE(SUM(status = ?), 0) AS available,
+            COALESCE(SUM(status = ?), 0) AS maintenance
+       FROM assets`,
+  ).bind(ASSET_STATUS.ASSIGNED, ASSET_STATUS.AVAILABLE, ASSET_STATUS.MAINTENANCE),
+
+  db.prepare(
+    `SELECT (SELECT COUNT(*) FROM users)    AS total_users,
+            (SELECT COUNT(*) FROM licenses) AS total_licenses,
+            (SELECT COUNT(*) FROM licenses WHERE status = ?) AS active_licenses`,
+  ).bind(LICENSE_STATUS.ACTIVE),
+
+  db.prepare(
+    `SELECT c.id, c.name, c.slug, COUNT(a.id) AS asset_count
+       FROM categories c
+       LEFT JOIN assets a ON a.category_id = c.id
+      GROUP BY c.id
+      ORDER BY asset_count DESC`,
+  ),
+
+  db.prepare(
+    `SELECT id, asset_tag, manufacturer, model_name, warranty_expiry
+       FROM assets
+      WHERE warranty_expiry >= ? AND warranty_expiry <= ?
+      ORDER BY warranty_expiry
+      LIMIT 5`,
+  ).bind(today, in60Days),
+
+  db.prepare(
+    `SELECT id, asset_tag, name, expiry_date
+       FROM licenses
+      WHERE expiry_date >= ? AND status = ?
+      ORDER BY expiry_date
+      LIMIT 5`,
+  ).bind(today, LICENSE_STATUS.ACTIVE),
+
+  db.prepare(
+    `SELECT h.*, a.asset_tag AS asset_tag, l.asset_tag AS license_tag,
+            u.first_name AS user_first_name, u.last_name AS user_last_name
+       FROM asset_history h
+       LEFT JOIN assets a   ON a.id = h.asset_id
+       LEFT JOIN licenses l ON l.id = h.license_id
+       LEFT JOIN users u    ON u.id = h.user_id
+      ORDER BY h.created_at DESC, h.id DESC
+      LIMIT 10`,
+  ),
+]);
+
+const stats = (assetStats.results as AssetStats[])[0] ?? {
+  total: 0,
+  assigned: 0,
+  available: 0,
+  maintenance: 0,
+};
+const totals = (otherStats.results as { total_users: number; total_licenses: number; active_licenses: number }[])[0] ?? {
+  total_users: 0,
+  total_licenses: 0,
+  active_licenses: 0,
+};
+const categoryList = categories.results as CategoryWithCount[];
+const expiringWarranties = warranties.results as ExpiringAsset[];
+const expiringLicenses = licenses.results as ExpiringLicense[];
+const recentHistory = history.results as HistoryWithRefs[];
+
+const linkRowStyle =
+  'display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--md-outline-variant);text-decoration:none;color:var(--md-on-surface)';
+
+const statCards = [
+  { href: '/assets/', icon: 'devices', color: 'var(--md-primary)', tint: 'rgba(208,188,255,.15)',
+    value: stats.total, label: t.dash_total },
+  { href: '/assets/?status=assigned', icon: 'person', color: '#2196F3', tint: 'rgba(33,150,243,.15)',
+    value: stats.assigned, label: t.dash_assigned },
+  { href: '/assets/?status=available', icon: 'check_circle', color: '#4CAF50', tint: 'rgba(76,175,80,.15)',
+    value: stats.available, label: t.dash_available },
+  { href: '/assets/?status=maintenance', icon: 'build', color: '#FF9800', tint: 'rgba(255,152,0,.15)',
+    value: stats.maintenance, label: t.dash_maintenance },
+  { href: '/users/', icon: 'group', color: 'var(--md-secondary)', tint: 'rgba(204,194,220,.15)',
+    value: totals.total_users, label: t.dash_users },
+  { href: '/licenses/', icon: 'key', color: 'var(--md-tertiary)', tint: 'rgba(239,184,200,.15)',
+    value: `${totals.active_licenses}/${totals.total_licenses}`, label: t.dash_licenses_active },
+];
+---
+
+<Base title="Dashboard">
+  <a slot="top-actions" href="/assets/new/" class="btn btn-filled btn-sm">
+    <span class="material-icons-round">add</span>
+    {t.dash_add_asset}
+  </a>
+
+  <div class="stat-grid">
+    {
+      statCards.map((card) => (
+        <a href={card.href} class="stat-card" style="text-decoration:none">
+          <div class="stat-icon" style={`background:${card.tint}`}>
+            <span class="material-icons-round" style={`color:${card.color}`}>
+              {card.icon}
+            </span>
+          </div>
+          <div class="stat-number">{card.value}</div>
+          <div class="stat-label">{card.label}</div>
+        </a>
+      ))
+    }
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="dashboard-2col">
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">category</span>
+        <h2>{t.dash_by_category}</h2>
+      </div>
+      <div class="card-body" style="padding:0">
+        {
+          categoryList.map((cat) => (
+            <a href={`/assets/?category=${cat.id}`} style={linkRowStyle}>
+              <span class="material-icons-round" style="font-size:18px;color:var(--md-primary)">
+                {categoryIcon(cat.slug)}
+              </span>
+              <span style="flex:1;font-size:14px">{tk(t, `cat_${cat.slug}`, cat.name)}</span>
+              <span class="asset-tag" style="font-size:12px">
+                {cat.asset_count}
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="material-icons-round" style="color:var(--md-primary)">history</span>
+        <h2>{t.dash_recent}</h2>
+      </div>
+      <div class="card-body">
+        <HistoryTimeline items={recentHistory} showAsset showLicense showNote={false} />
+      </div>
+    </div>
+
+    {
+      expiringWarranties.length > 0 && (
+        <div class="card">
+          <div class="card-header">
+            <span class="material-icons-round" style="color:var(--md-warning)">
+              warning
+            </span>
+            <h2>{t.dash_expiring_warranties}</h2>
+          </div>
+          <div class="card-body" style="padding:0">
+            {expiringWarranties.map((a) => (
+              <a href={`/assets/${a.id}/`} style={linkRowStyle}>
+                <span class="asset-tag">{a.asset_tag}</span>
+                <span style="flex:1;font-size:14px">{assetName(a)}</span>
+                <span class="text-sm text-muted">{formatDate(a.warranty_expiry)}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    {
+      expiringLicenses.length > 0 && (
+        <div class="card">
+          <div class="card-header">
+            <span class="material-icons-round" style="color:var(--md-warning)">
+              schedule
+            </span>
+            <h2>{t.dash_expiring_licenses}</h2>
+          </div>
+          <div class="card-body" style="padding:0">
+            {expiringLicenses.map((l) => (
+              <a href={`/licenses/${l.id}/`} style={linkRowStyle}>
+                <span
+                  class="asset-tag"
+                  style="background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)"
+                >
+                  {l.asset_tag}
+                </span>
+                <span style="flex:1;font-size:14px">{l.name}</span>
+                <span class="text-sm text-muted">{formatDate(l.expiry_date)}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
+  </div>
+</Base>

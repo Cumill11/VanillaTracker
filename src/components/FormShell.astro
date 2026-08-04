@@ -1,0 +1,27 @@
+---
+/** Ramka formularza: token CSRF i przyciski „Zapisz" / „Anuluj". */
+interface Props {
+  action: string;
+  cancelHref: string;
+  maxWidth: number;
+}
+
+const { action, cancelHref, maxWidth } = Astro.props;
+const { t, session } = Astro.locals;
+---
+
+<div style={`max-width:${maxWidth}px`}>
+  <form method="post" action={action}>
+    <input type="hidden" name="csrf_token" value={session.csrfToken} />
+
+    <slot />
+
+    <div class="flex gap-12">
+      <button type="submit" class="btn btn-filled">
+        <span class="material-icons-round">save</span>
+        {t.btn_save}
+      </button>
+      <a href={cancelHref} class="btn btn-outlined">{t.btn_cancel}</a>
+    </div>
+  </form>
+</div>

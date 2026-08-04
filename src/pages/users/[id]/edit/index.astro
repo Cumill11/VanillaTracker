@@ -1,0 +1,58 @@
+---
+/** Edycja osoby — port tras `GET/POST /users/<pk>/edit/`. */
+import UserForm from '../../../../components/UserForm.astro';
+import Base from '../../../../layouts/Base.astro';
+import { fullName, type DepartmentRow, type UserRow } from '../../../../lib/db';
+import { userForm } from '../../../../lib/entities';
+import { parseId, type Errors } from '../../../../lib/forms';
+import { updateRow } from '../../../../lib/sql';
+
+const { t, session, db } = Astro.locals;
+
+const id = parseId(Astro.params.id);
+if (id === null) return Astro.redirect('/users/');
+
+const [userResult, departmentsResult] = await db.batch([
+  db.prepare('SELECT * FROM users WHERE id = ?').bind(id),
+  db.prepare('SELECT id, name FROM departments ORDER BY name'),
+]);
+
+const user = (userResult.results as UserRow[])[0];
+if (!user) return Astro.redirect('/users/');
+
+const departments = departmentsResult.results as DepartmentRow[];
+
+let data = userForm.fromRow(user);
+let errors: Errors = {};
+
+if (Astro.request.method === 'POST') {
+  data = userForm.read(Astro.locals.form);
+  errors = userForm.validate(data, t);
+
+  if (Object.keys(errors).length === 0) {
+    await updateRow(db, 'users', userForm.columns(data), id);
+    session.addMessage(t.msg_user_updated);
+    return Astro.redirect('/users/');
+  }
+
+  Astro.response.status = 400;
+}
+---
+
+<Base title={t.user_form_edit}>
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/users/">{t.nav_users}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <a href={`/users/${id}/`}>{fullName(user)}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{t.user_form_edit}</span>
+  </div>
+
+  <UserForm
+    action={`/users/${id}/edit/`}
+    cancelHref={`/users/${id}/`}
+    departments={departments}
+    data={data}
+    errors={errors}
+  />
+</Base>

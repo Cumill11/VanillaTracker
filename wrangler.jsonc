@@ -1,0 +1,45 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vanillatracker",
+  "compatibility_date": "2026-01-15",
+  // Bez `nodejs_compat`: ta flaga wstawia obiekt `process`, po którym Astro
+  // rozpoznaje Node i renderuje strony przez async-iterable — a `Response`
+  // w workerd takiego ciała nie przyjmuje i odsyła "[object Object]".
+  // Aplikacja i tak korzysta wyłącznie z API dostępnych w Workers
+  // (WebCrypto, fetch), a pdf-lib i qrcode to czysty JavaScript.
+  "observability": {
+    "enabled": true
+  },
+
+  // Adres własny zamiast *.workers.dev. Wrangler sam zakłada rekord DNS przy
+  // wdrożeniu — wymaga, żeby strefa `venicci.pl` była w tym samym koncie
+  // Cloudflare (na jego serwerach nazw).
+  "routes": [
+    {
+      "pattern": "assets.venicci.pl",
+      "custom_domain": true
+    }
+  ],
+  // Wyłącza adres vanillatracker.<subdomena>.workers.dev.
+  "workers_dev": false,
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "vanillatracker",
+      // Podmień na ID z `npx wrangler d1 create vanillatracker`.
+      "database_id": "993941b6-0ddc-433e-a62e-ac2e50cbfdd1",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "vars": {
+    // Prefiks numerów inwentarzowych: 2–4 wielkie litery (np. BS-00001).
+    "TAG_PREFIX": "BS"
+  }
+
+  // Sekrety (ustaw przez `npx wrangler secret put <NAZWA>`):
+  //   ADMIN_USERNAME   — login administratora
+  //   ADMIN_PASSWORD   — hasło administratora
+  //   SESSION_SECRET   — losowy klucz do podpisu ciasteczka sesji
+}

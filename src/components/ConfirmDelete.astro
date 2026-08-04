@@ -1,0 +1,36 @@
+---
+/** Potwierdzenie usunięcia — port `confirm_delete.html`. */
+interface Props {
+  objectName: string;
+  cancelHref: string;
+  action: string;
+}
+
+const { objectName, cancelHref, action } = Astro.props;
+const { t, session } = Astro.locals;
+---
+
+<div style="max-width:500px">
+  <div class="card">
+    <div class="card-header">
+      <span class="material-icons-round" style="color:var(--md-error)">delete_forever</span>
+      <h2>{t.delete_title}</h2>
+    </div>
+    <div class="card-body">
+      <p style="margin-bottom:24px;color:var(--md-on-surface)">
+        {t.delete_question} <strong>{objectName}</strong>?
+        <br /><span class="text-sm text-muted">{t.delete_irreversible}</span>
+      </p>
+      <form method="post" action={action}>
+        <input type="hidden" name="csrf_token" value={session.csrfToken} />
+        <div class="flex gap-12">
+          <button type="submit" class="btn btn-error">
+            <span class="material-icons-round">delete</span>
+            {t.btn_delete}
+          </button>
+          <a href={cancelHref} class="btn btn-outlined">{t.btn_cancel}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

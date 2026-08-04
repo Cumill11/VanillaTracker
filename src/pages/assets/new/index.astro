@@ -1,0 +1,126 @@
+---
+/**
+ * Dodawanie sprzętu — port tras `GET/POST /assets/new/`.
+ *
+ * Dwa ułatwienia względem wersji Flask: sprzęt można od razu przypisać osobie
+ * (prawie każdy i tak trafia do kogoś zaraz po dodaniu), a `?clone=<id>`
+ * wypełnia formularz danymi istniejącego sprzętu — przy zakupie kilku
+ * identycznych sztuk nie trzeba przepisywać wszystkiego od nowa.
+ */
+import AssetForm from '../../../components/AssetForm.astro';
+import Base from '../../../layouts/Base.astro';
+import {
+  ASSET_STATUS,
+  HISTORY_ACTION,
+  addHistory,
+  fullName,
+  nextTag,
+  nowIso,
+  tagPrefix,
+  todayIso,
+  type AssetRow,
+  type CategoryRow,
+  type UserRow,
+} from '../../../lib/db';
+import { assetForm, type AssetFormData } from '../../../lib/entities';
+import { env } from '../../../lib/env';
+import { field, parseId, parseInteger, type Errors } from '../../../lib/forms';
+import { fmt } from '../../../lib/i18n';
+import { NOTES } from '../../../lib/notes';
+import { insertRow } from '../../../lib/sql';
+
+const { t, session, db } = Astro.locals;
+
+type Person = Pick<UserRow, 'id' | 'first_name' | 'last_name'>;
+
+const cloneId = parseId(Astro.url.searchParams.get('clone') ?? undefined);
+
+const [categoriesResult, usersResult, cloneResult] = await db.batch([
+  db.prepare('SELECT id, name, slug FROM categories ORDER BY name'),
+  db.prepare('SELECT id, first_name, last_name FROM users ORDER BY last_name, first_name'),
+  db.prepare('SELECT * FROM assets WHERE id = ?').bind(cloneId ?? 0),
+]);
+
+const categories = categoriesResult.results as CategoryRow[];
+const users = usersResult.results as Person[];
+const source = (cloneResult.results as AssetRow[])[0];
+
+// Numer seryjny jest z definicji niepowtarzalny, więc go nie kopiujemy.
+let data: AssetFormData = source
+  ? { ...assetForm.fromRow(source), serial_number: '' }
+  : assetForm.empty();
+let assignUserId = '';
+let errors: Errors = {};
+
+if (Astro.request.method === 'POST') {
+  data = assetForm.read(Astro.locals.form);
+  assignUserId = field(Astro.locals.form, 'assign_user_id');
+  errors = assetForm.validate(data, t);
+
+  if (Object.keys(errors).length === 0) {
+    const userId = parseInteger(assignUserId);
+    const assignee = userId === null ? undefined : users.find((u) => u.id === userId);
+
+    const { number, tag } = await nextTag(db, tagPrefix(env));
+    const now = nowIso();
+
+    const createdId = await insertRow(db, 'assets', {
+      asset_tag: tag,
+      tag_number: number,
+      ...assetForm.columns(data),
+      status: assignee ? ASSET_STATUS.ASSIGNED : ASSET_STATUS.AVAILABLE,
+      assigned_to_id: assignee?.id ?? null,
+      assigned_date: assignee ? todayIso() : null,
+      created_at: now,
+      updated_at: now,
+    });
+
+    if (createdId !== null) {
+      const entries = [
+        addHistory(db, {
+          asset_id: createdId,
+          action: HISTORY_ACTION.NOTE,
+          note: NOTES.ASSET_CREATED,
+        }),
+      ];
+      if (assignee) {
+        entries.push(
+          addHistory(db, {
+            asset_id: createdId,
+            action: HISTORY_ACTION.ASSIGN,
+            user_id: assignee.id,
+          }),
+        );
+      }
+      await db.batch(entries);
+
+      session.addMessage(
+        assignee
+          ? fmt(t.msg_asset_assigned, { tag, name: fullName(assignee) })
+          : fmt(t.msg_asset_added, { tag }),
+      );
+      return Astro.redirect(`/assets/${createdId}/`);
+    }
+  }
+
+  Astro.response.status = 400;
+}
+---
+
+<Base title={t.asset_form_new}>
+  <div slot="breadcrumb" class="breadcrumb">
+    <a href="/assets/">{t.nav_assets}</a>
+    <span class="sep material-icons-round">chevron_right</span>
+    <span class="current">{t.asset_form_new}</span>
+  </div>
+
+  <AssetForm
+    action="/assets/new/"
+    cancelHref="/assets/"
+    categories={categories}
+    data={data}
+    errors={errors}
+    users={users}
+    assignUserId={assignUserId}
+  />
+</Base>

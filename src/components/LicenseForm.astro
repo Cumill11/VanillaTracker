@@ -1,0 +1,62 @@
+---
+/** Formularz licencji — port `license_form.html`. */
+import FormCard from './FormCard.astro';
+import FormField from './FormField.astro';
+import FormShell from './FormShell.astro';
+import { LICENSE_MANUAL_STATUS_VALUES } from '../lib/db';
+import type { LicenseFormData } from '../lib/entities';
+import type { Errors } from '../lib/forms';
+import { tk } from '../lib/i18n';
+
+interface Props {
+  action: string;
+  cancelHref: string;
+  data: LicenseFormData;
+  errors: Errors;
+}
+
+const { action, cancelHref, data, errors } = Astro.props;
+const { t } = Astro.locals;
+---
+
+<FormShell action={action} cancelHref={cancelHref} maxWidth={800}>
+  <FormCard title={t.lic_form_title} icon="key">
+    <FormField label={t.lbl_name} name="name" value={data.name} errors={errors.name} required full />
+    <FormField label={t.lic_vendor} name="vendor" value={data.vendor} />
+    <FormField label={t.lic_seats} name="seats" type="number" value={data.seats} min="1" />
+    <FormField
+      label={t.lic_key}
+      name="license_key"
+      value={data.license_key}
+      inputClass="font-mono"
+      rows={2}
+      full
+    />
+    <FormField
+      label={t.lic_purchase_date}
+      name="purchase_date"
+      type="date"
+      value={data.purchase_date}
+    />
+    <FormField label={t.lic_expiry_date} name="expiry_date" type="date" value={data.expiry_date} />
+    <FormField
+      label={t.lic_purchase_price}
+      name="purchase_price"
+      type="number"
+      step="0.01"
+      value={data.purchase_price}
+    />
+    <FormField label={t.lbl_status} name="status">
+      <select id="f-status" name="status" class="md3-select">
+        {
+          LICENSE_MANUAL_STATUS_VALUES.map((value) => (
+            <option value={value} selected={data.status === value}>
+              {tk(t, `status_${value}`, value)}
+            </option>
+          ))
+        }
+      </select>
+    </FormField>
+    <FormField label={t.lbl_notes} name="notes" value={data.notes} rows={3} full />
+  </FormCard>
+</FormShell>

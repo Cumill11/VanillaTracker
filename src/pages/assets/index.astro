@@ -1,0 +1,311 @@
+---
+/** Lista sprzętu — port `asset_list.html`. */
+import Pagination from '../../components/Pagination.astro';
+import StatusChip from '../../components/StatusChip.astro';
+import Base from '../../layouts/Base.astro';
+import {
+  ASSET_STATUS_VALUES,
+  assetName,
+  fullName,
+  type AssetRow,
+  type CategoryRow,
+  type UserRow,
+} from '../../lib/db';
+import { ASSET_FROM, assetFilters } from '../../lib/assetQuery';
+import { categoryIcon } from '../../lib/format';
+import { tk } from '../../lib/i18n';
+import { paginate, parsePage } from '../../lib/pagination';
+
+const { t, session, db } = Astro.locals;
+const params = Astro.url.searchParams;
+
+const { q, category, status, sort, orderBy, where, args } = assetFilters(params);
+const page = parsePage(params.get('page'));
+
+type AssetListRow = AssetRow & {
+  category_name: string | null;
+  category_slug: string | null;
+  assigned_first_name: string | null;
+  assigned_last_name: string | null;
+  department_name: string | null;
+};
+
+const [assets, listsResult] = await Promise.all([
+  paginate<AssetListRow>(db, {
+    columns: `a.*, c.name AS category_name, c.slug AS category_slug,
+              u.first_name AS assigned_first_name, u.last_name AS assigned_last_name,
+              d.name AS department_name`,
+    from: ASSET_FROM,
+    where,
+    orderBy,
+    args,
+    page,
+  }),
+  db.batch([
+    db.prepare('SELECT id, name, slug FROM categories ORDER BY name'),
+    db.prepare('SELECT id, first_name, last_name FROM users ORDER BY last_name, first_name'),
+  ]),
+]);
+
+const [categoriesResult, usersResult] = listsResult;
+const categories = categoriesResult.results as CategoryRow[];
+const users = usersResult.results as Pick<UserRow, 'id' | 'first_name' | 'last_name'>[];
+const filters = { q, category, status, sort };
+const exportParams = new URLSearchParams();
+for (const [key, value] of Object.entries({ q, category, status, sort })) {
+  if (value) exportParams.set(key, value);
+}
+const exportQuery = exportParams.toString() ? `?${exportParams}` : '';
+
+const sortHref = (key: string) =>
+  `?${new URLSearchParams({ q, category, status, sort: key }).toString()}`;
+---
+
+<Base title={t.assets_title}>
+  <Fragment slot="top-actions">
+    <form method="post" action="/assets/labels/" id="bulk-form">
+      <input type="hidden" name="csrf_token" value={session.csrfToken} />
+      <button type="submit" class="btn btn-outlined btn-sm" id="bulk-label-btn" style="display:none">
+        <span class="material-icons-round">label</span>
+        <span>{t.assets_pdf_labels}</span>
+      </button>
+    </form>
+    <a href={`/assets/export/${exportQuery}`} class="btn btn-outlined btn-sm">
+      <span class="material-icons-round">download</span>
+      <span>{t.assets_export}</span>
+    </a>
+    <a href="/assets/new/" class="btn btn-filled btn-sm">
+      <span class="material-icons-round">add</span>
+      <span>{t.assets_add}</span>
+    </a>
+  </Fragment>
+
+  <form method="get" action="/assets/" id="filter-form">
+    <div class="filters-bar">
+      <div class="search-field">
+        <span class="material-icons-round">search</span>
+        <input
+          type="text"
+          name="q"
+          value={q}
+          placeholder={t.lbl_search}
+          oninput="debounceSearch(this)"
+        />
+      </div>
+      <select name="category" class="md3-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">{t.lbl_all_categories}</option>
+        {
+          categories.map((cat) => (
+            <option value={cat.id} selected={category === String(cat.id)}>
+              {tk(t, `cat_${cat.slug}`, cat.name)}
+            </option>
+          ))
+        }
+      </select>
+      <select name="status" class="md3-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">{t.lbl_all_statuses}</option>
+        {
+          ASSET_STATUS_VALUES.map((value) => (
+            <option value={value} selected={status === value}>
+              {tk(t, `status_${value}`, value)}
+            </option>
+          ))
+        }
+      </select>
+      <input type="hidden" name="sort" value={sort} />
+    </div>
+  </form>
+
+  {/* Zaznaczenia należą do formularza `bulk-form` z paska górnego; przyciski
+      kierują je pod różne adresy przez `formaction`. */}
+  <div class="bulk-bar" id="bulk-bar">
+    <span class="text-sm text-muted">
+      <span id="bulk-count">0</span>{' '}
+      {t.assets_bulk_selected}
+    </span>
+    <select
+      name="assign_user_id"
+      form="bulk-form"
+      class="md3-select"
+      style="width:auto;min-width:180px"
+    >
+      <option value="">{t.assets_bulk_pick_user}</option>
+      {users.map((user) => <option value={user.id}>{fullName(user)}</option>)}
+    </select>
+    <button
+      type="submit"
+      form="bulk-form"
+      formaction="/assets/bulk-assign/"
+      class="btn btn-filled btn-sm"
+    >
+      <span class="material-icons-round">person_add</span>
+      <span>{t.assets_bulk_assign}</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="desktop-table">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:36px">
+              <input
+                type="checkbox"
+                id="select-all"
+                style="width:16px;height:16px;accent-color:var(--md-primary)"
+              />
+            </th>
+            <th>
+              <a href={sortHref('tag_number')} style="color:inherit;text-decoration:none"
+                >{t.assets_col_tag}</a
+              >
+            </th>
+            <th>
+              <a href={sortHref('name')} style="color:inherit;text-decoration:none"
+                >{t.assets_col_mfr_model}</a
+              >
+            </th>
+            <th class="col-hide-sm">{t.assets_col_category}</th>
+            <th>{t.lbl_status}</th>
+            <th class="col-hide-sm">{t.assets_col_assigned}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            assets.items.length === 0 ? (
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <span class="material-icons-round">devices</span>
+                    <h3>{t.assets_empty}</h3>
+                    <p>
+                      <a href="/assets/new/">{t.assets_add_first}</a>
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              assets.items.map((asset) => (
+                <tr>
+                  <td>
+                    <input
+                      type="checkbox"
+                      name="asset_pks"
+                      value={asset.id}
+                      form="bulk-form"
+                      class="bulk-cb"
+                      style="width:16px;height:16px;accent-color:var(--md-primary)"
+                    />
+                  </td>
+                  <td>
+                    <a href={`/assets/${asset.id}/`} class="asset-tag">
+                      {asset.asset_tag}
+                    </a>
+                  </td>
+                  <td>
+                    <a href={`/assets/${asset.id}/`} style="color:var(--md-on-surface)">
+                      {assetName(asset)}
+                    </a>
+                  </td>
+                  <td class="col-hide-sm">
+                    {asset.category_slug ? (
+                      <span class="category-badge">
+                        <span class="material-icons-round">{categoryIcon(asset.category_slug)}</span>
+                        {tk(t, `cat_${asset.category_slug}`, asset.category_name ?? '')}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>
+                    <StatusChip status={asset.status} />
+                  </td>
+                  <td class="col-hide-sm">
+                    {asset.assigned_to_id ? (
+                      <a href={`/users/${asset.assigned_to_id}/`}>
+                        {fullName({
+                          first_name: asset.assigned_first_name ?? '',
+                          last_name: asset.assigned_last_name ?? '',
+                        })}
+                      </a>
+                    ) : asset.department_name ? (
+                      <span class="text-muted" style="font-size:13px">
+                        <span class="material-icons-round" style="font-size:14px;vertical-align:-3px">
+                          business
+                        </span>{' '}
+                        {asset.department_name}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>
+                    <a href={`/assets/${asset.id}/edit/`} class="btn-icon" title={t.btn_edit}>
+                      <span class="material-icons-round">edit</span>
+                    </a>
+                  </td>
+                </tr>
+              ))
+            )
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mobile-card-list">
+      {
+        assets.items.length === 0 ? (
+          <div class="empty-state">
+            <span class="material-icons-round">devices</span>
+            <h3>{t.assets_empty}</h3>
+          </div>
+        ) : (
+          assets.items.map((asset) => (
+            <a href={`/assets/${asset.id}/`} class="mob-list-item">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+                <span class="asset-tag">{asset.asset_tag}</span>
+                <StatusChip status={asset.status} />
+              </div>
+              <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">
+                {assetName(asset)}
+              </div>
+            </a>
+          ))
+        )
+      }
+    </div>
+
+    <Pagination page={assets} filters={filters} />
+  </div>
+
+  <script slot="extra-js" is:inline>
+    (function () {
+      var allCb = document.getElementById('select-all');
+      var bulkCbs = document.querySelectorAll('.bulk-cb');
+      var bulkBtn = document.getElementById('bulk-label-btn');
+      var bulkBar = document.getElementById('bulk-bar');
+      var bulkCount = document.getElementById('bulk-count');
+      if (!allCb || !bulkBtn) return;
+
+      function updateBulkBtn() {
+        var checked = Array.prototype.filter.call(bulkCbs, function (c) {
+          return c.checked;
+        });
+        bulkBtn.style.display = checked.length ? '' : 'none';
+        if (bulkBar) bulkBar.style.display = checked.length ? 'flex' : 'none';
+        if (bulkCount) bulkCount.textContent = String(checked.length);
+      }
+
+      allCb.addEventListener('change', function () {
+        bulkCbs.forEach(function (c) {
+          c.checked = allCb.checked;
+        });
+        updateBulkBtn();
+      });
+      bulkCbs.forEach(function (c) {
+        c.addEventListener('change', updateBulkBtn);
+      });
+    })();
+  </script>
+</Base>

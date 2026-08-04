@@ -1,0 +1,57 @@
+---
+/**
+ * Formularz osoby — port `user_form.html` bez sekcji „Dostęp do systemu".
+ * Osoby nie logują się do aplikacji, więc login i hasło zniknęły z modelu.
+ */
+import FormCard from './FormCard.astro';
+import FormField from './FormField.astro';
+import FormShell from './FormShell.astro';
+import type { DepartmentRow } from '../lib/db';
+import type { UserFormData } from '../lib/entities';
+import type { Errors } from '../lib/forms';
+
+interface Props {
+  action: string;
+  cancelHref: string;
+  departments: DepartmentRow[];
+  data: UserFormData;
+  errors: Errors;
+}
+
+const { action, cancelHref, departments, data, errors } = Astro.props;
+const { t } = Astro.locals;
+---
+
+<FormShell action={action} cancelHref={cancelHref} maxWidth={700}>
+  <FormCard title={t.user_form_title} icon="person">
+    <FormField
+      label={t.user_first_name}
+      name="first_name"
+      value={data.first_name}
+      errors={errors.first_name}
+      required
+    />
+    <FormField
+      label={t.user_last_name}
+      name="last_name"
+      value={data.last_name}
+      errors={errors.last_name}
+      required
+    />
+    <FormField label={t.user_email} name="email" type="email" value={data.email} />
+    <FormField label={t.user_dept} name="department_id">
+      <select id="f-department_id" name="department_id" class="md3-select">
+        <option value="">{t.lbl_none}</option>
+        {
+          departments.map((dept) => (
+            <option value={dept.id} selected={data.department_id === String(dept.id)}>
+              {dept.name}
+            </option>
+          ))
+        }
+      </select>
+    </FormField>
+    <FormField label={t.user_position} name="position" value={data.position} />
+    <FormField label={t.user_phone} name="phone" value={data.phone} />
+  </FormCard>
+</FormShell>

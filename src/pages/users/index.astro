@@ -1,0 +1,172 @@
+---
+/** Lista osób — port `user_list.html`. */
+import Pagination from '../../components/Pagination.astro';
+import Base from '../../layouts/Base.astro';
+import { ASSET_STATUS, fullName, initials, type DepartmentRow, type UserRow } from '../../lib/db';
+import { likePattern } from '../../lib/forms';
+import { paginate, parsePage } from '../../lib/pagination';
+
+const { t, db } = Astro.locals;
+const params = Astro.url.searchParams;
+
+const q = params.get('q') ?? '';
+const department = params.get('department') ?? '';
+const page = parsePage(params.get('page'));
+
+const where: string[] = [];
+const args: unknown[] = [];
+
+if (q) {
+  const columns = ['u.first_name', 'u.last_name', 'u.email'];
+  where.push(`(${columns.map((c) => `${c} LIKE ? ESCAPE '\\'`).join(' OR ')})`);
+  for (let i = 0; i < columns.length; i++) args.push(likePattern(q));
+}
+if (/^\d+$/.test(department)) {
+  where.push('u.department_id = ?');
+  args.push(Number.parseInt(department, 10));
+}
+const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+type UserListRow = UserRow & { department_name: string | null; asset_count: number };
+
+const [users, departmentsResult] = await Promise.all([
+  paginate<UserListRow>(db, {
+    columns: `u.*, d.name AS department_name,
+              (SELECT COUNT(*) FROM assets a
+                WHERE a.assigned_to_id = u.id AND a.status = '${ASSET_STATUS.ASSIGNED}') AS asset_count`,
+    from: 'users u LEFT JOIN departments d ON d.id = u.department_id',
+    where: whereSql,
+    orderBy: 'u.last_name, u.first_name',
+    args,
+    page,
+  }),
+  db.prepare('SELECT id, name FROM departments ORDER BY name').all<DepartmentRow>(),
+]);
+
+const departments = departmentsResult.results ?? [];
+---
+
+<Base title={t.users_title}>
+  <a slot="top-actions" href="/users/new/" class="btn btn-filled btn-sm">
+    <span class="material-icons-round">person_add</span>
+    <span>{t.users_add}</span>
+  </a>
+
+  <form method="get" action="/users/">
+    <div class="filters-bar">
+      <div class="search-field">
+        <span class="material-icons-round">search</span>
+        <input
+          type="text"
+          name="q"
+          value={q}
+          placeholder={t.lbl_search}
+          oninput="debounceSearch(this)"
+        />
+      </div>
+      <select name="department" class="md3-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">{t.lbl_all_departments}</option>
+        {
+          departments.map((dept) => (
+            <option value={dept.id} selected={department === String(dept.id)}>
+              {dept.name}
+            </option>
+          ))
+        }
+      </select>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="desktop-table">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{t.users_col_name}</th>
+            <th class="col-hide-sm">{t.users_col_dept}</th>
+            <th class="col-hide-sm">{t.users_col_email}</th>
+            <th class="col-hide-sm">{t.users_col_phone}</th>
+            <th>{t.users_col_assets}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            users.items.length === 0 ? (
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">
+                    <span class="material-icons-round">group</span>
+                    <h3>{t.users_empty}</h3>
+                    <p>
+                      <a href="/users/new/">{t.users_add_first}</a>
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              users.items.map((u) => (
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div class="avatar">{initials(u)}</div>
+                      <div>
+                        <a href={`/users/${u.id}/`} style="color:var(--md-on-surface)">
+                          {fullName(u)}
+                        </a>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="col-hide-sm">{u.department_name || '—'}</td>
+                  <td class="col-hide-sm">{u.email || '—'}</td>
+                  <td class="col-hide-sm">{u.phone || '—'}</td>
+                  <td>
+                    {u.asset_count ? (
+                      <span class="asset-tag" style="font-size:12px">
+                        {u.asset_count}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>
+                    <a href={`/users/${u.id}/edit/`} class="btn-icon" title={t.btn_edit}>
+                      <span class="material-icons-round">edit</span>
+                    </a>
+                  </td>
+                </tr>
+              ))
+            )
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mobile-card-list">
+      {
+        users.items.length === 0 ? (
+          <div class="empty-state">
+            <span class="material-icons-round">group</span>
+            <h3>{t.users_empty}</h3>
+          </div>
+        ) : (
+          users.items.map((u) => (
+            <a href={`/users/${u.id}/`} class="mob-list-item">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="avatar">{initials(u)}</div>
+                <div>
+                  <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">
+                    {fullName(u)}
+                  </div>
+                  <div class="text-xs text-muted">{u.department_name ?? ''}</div>
+                </div>
+              </div>
+            </a>
+          ))
+        )
+      }
+    </div>
+
+    <Pagination page={users} filters={{ q, department }} />
+  </div>
+</Base>

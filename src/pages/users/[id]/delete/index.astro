@@ -1,0 +1,61 @@
+---
+/**
+ * Usuwanie osoby — port tras `GET/POST /users/<pk>/delete/`.
+ *
+ * Osoby z przypisanym sprzętem lub licencjami blokujemy — najpierw trzeba je
+ * odpiąć, żeby nie zgubić powiązań.
+ */
+import ConfirmDelete from '../../../../components/ConfirmDelete.astro';
+import Base from '../../../../layouts/Base.astro';
+import { fullName, type UserRow } from '../../../../lib/db';
+import { parseId } from '../../../../lib/forms';
+import { fmt } from '../../../../lib/i18n';
+
+const { t, session, db } = Astro.locals;
+
+const id = parseId(Astro.params.id);
+if (id === null) return Astro.redirect('/users/');
+
+const [userResult, countsResult] = await db.batch([
+  db.prepare('SELECT id, first_name, last_name FROM users WHERE id = ?').bind(id),
+  db
+    .prepare(
+      `SELECT (SELECT COUNT(*) FROM assets WHERE assigned_to_id = ?1)  AS assets,
+              (SELECT COUNT(*) FROM license_users WHERE user_id = ?1)  AS licenses`,
+    )
+    .bind(id),
+]);
+
+const user = (userResult.results as Pick<UserRow, 'id' | 'first_name' | 'last_name'>[])[0];
+if (!user) return Astro.redirect('/users/');
+
+const name = fullName(user);
+const counts = (countsResult.results as { assets: number; licenses: number }[])[0];
+
+const blockers: string[] = [];
+if (counts?.assets) blockers.push(fmt(t.msg_blocker_assets, { count: counts.assets }));
+if (counts?.licenses) blockers.push(fmt(t.msg_blocker_licenses, { count: counts.licenses }));
+
+if (blockers.length > 0) {
+  session.addMessage(fmt(t.msg_user_blocked, { name, blockers: blockers.join(', ') }));
+  return Astro.redirect(`/users/${id}/`);
+}
+
+if (Astro.request.method === 'POST') {
+  // Historia zostaje — czyścimy tylko wskazanie na usuwaną osobę.
+  await db.batch([
+    db.prepare('UPDATE asset_history SET user_id = NULL WHERE user_id = ?').bind(id),
+    db.prepare('DELETE FROM users WHERE id = ?').bind(id),
+  ]);
+  session.addMessage(fmt(t.msg_user_deleted, { name }));
+  return Astro.redirect('/users/');
+}
+---
+
+<Base title={t.btn_delete} pageTitle={t.delete_title}>
+  <ConfirmDelete
+    objectName={name}
+    cancelHref={`/users/${id}/`}
+    action={`/users/${id}/delete/`}
+  />
+</Base>
