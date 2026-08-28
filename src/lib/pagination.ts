@@ -13,7 +13,7 @@ export type Page<T> = {
   hasNext: boolean;
 };
 
-export type PageQuery = {
+type PageQuery = {
   /** Lista kolumn bez `SELECT`. */
   columns: string;
   /** Tabela wraz ze złączeniami, bez `FROM`. */

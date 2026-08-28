@@ -27,14 +27,14 @@ const COL_NO = 12 * MM;
 const COL_TAG = 32 * MM;
 const COL_SERIAL = 45 * MM;
 
-export type ProtocolPerson = {
+type ProtocolPerson = {
   name: string;
   position: string;
   department: string;
   email: string;
 };
 
-export type ProtocolAsset = {
+type ProtocolAsset = {
   asset_tag: string;
   name: string;
   serial_number: string | null;

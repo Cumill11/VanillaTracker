@@ -20,7 +20,7 @@ export const ASSET_FROM = `assets a
              LEFT JOIN users u        ON u.id = a.assigned_to_id
              LEFT JOIN departments d  ON d.id = a.department_id`;
 
-export type AssetFilters = {
+type AssetFilters = {
   q: string;
   category: string;
   status: string;
