@@ -45,8 +45,6 @@ npm run deploy
 ```
 Podczas git push następuje automatyczne wdrożenie na Cloudflare
 
-Prefiks numerów inwentarzowych ustawia się w `wrangler.jsonc` (`vars.TAG_PREFIX`,
-2–4 wielkie litery) — nie jest sekretem, więc nie idzie przez `wrangler secret`.
 
 ## Komendy
 
