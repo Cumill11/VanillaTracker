@@ -21,6 +21,7 @@ export function isPublicPath(pathname: string): boolean {
     pathname === '/login' ||
     pathname.startsWith('/login/') ||
     pathname.startsWith('/img/') ||
+    pathname.startsWith('/fonts/') ||
     pathname.startsWith('/_astro/') ||
     pathname === '/favicon.ico'
   );

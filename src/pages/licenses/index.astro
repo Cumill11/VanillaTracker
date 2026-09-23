@@ -3,7 +3,7 @@
 import Pagination from '../../components/Pagination.astro';
 import StatusChip from '../../components/StatusChip.astro';
 import Base from '../../layouts/Base.astro';
-import { LICENSE_STATUS_VALUES, type LicenseRow } from '../../lib/db';
+import { LICENSE_STATUS_SQL, LICENSE_STATUS_VALUES, type LicenseRow } from '../../lib/db';
 import { formatDate, seatsBarClass, seatsPercent } from '../../lib/format';
 import { likePattern } from '../../lib/forms';
 import { tk } from '../../lib/i18n';
@@ -25,15 +25,16 @@ if (q) {
   for (let i = 0; i < columns.length; i++) args.push(likePattern(q));
 }
 if (status) {
-  where.push('l.status = ?');
+  where.push(`${LICENSE_STATUS_SQL} = ?`);
   args.push(status);
 }
 const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-type LicenseListRow = LicenseRow & { seats_used: number };
+type LicenseListRow = LicenseRow & { seats_used: number; effective_status: string };
 
 const licenses = await paginate<LicenseListRow>(db, {
-  columns: `l.*, (SELECT COUNT(*) FROM license_users lu WHERE lu.license_id = l.id) AS seats_used`,
+  columns: `l.*, ${LICENSE_STATUS_SQL} AS effective_status,
+            (SELECT COUNT(*) FROM license_users lu WHERE lu.license_id = l.id) AS seats_used`,
   from: 'licenses l',
   where: whereSql,
   orderBy: 'l.tag_number',
@@ -121,7 +122,7 @@ const tagStyle =
                     </td>
                     <td class="col-hide-sm">{lic.vendor || '—'}</td>
                     <td>
-                      <StatusChip status={lic.status} />
+                      <StatusChip status={lic.effective_status} />
                     </td>
                     <td class="col-hide-sm">
                       {lic.seats_used}/{lic.seats}
@@ -161,7 +162,7 @@ const tagStyle =
                 <span class="asset-tag" style={tagStyle}>
                   {lic.asset_tag}
                 </span>
-                <StatusChip status={lic.status} />
+                <StatusChip status={lic.effective_status} />
               </div>
               <div style="font-size:14px;font-weight:500;color:var(--md-on-surface)">
                 {lic.name}

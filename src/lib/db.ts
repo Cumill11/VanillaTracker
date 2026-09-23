@@ -248,6 +248,13 @@ export function addHistory(
 }
 
 /**
+ * Ten sam status liczony w SQL (licencja pod aliasem `l`). Zapisany `status`
+ * nie zmienia się sam, gdy mija data wygaśnięcia — bez tego licencja po
+ * terminie dalej widniałaby na listach i w filtrze jako „active".
+ */
+export const LICENSE_STATUS_SQL = `CASE WHEN l.expiry_date < date('now') THEN '${LICENSE_STATUS.EXPIRED}' ELSE l.status END`;
+
+/**
  * Status licencji: „expired" wynika wprost z daty wygaśnięcia i ma pierwszeństwo
  * przed wyborem użytkownika (port `_effective_status`).
  */

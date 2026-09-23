@@ -4,7 +4,14 @@ import HistoryTimeline from '../../../components/HistoryTimeline.astro';
 import StatusChip from '../../../components/StatusChip.astro';
 import Field from '../../../components/Field.astro';
 import Base from '../../../layouts/Base.astro';
-import { fullName, initials, type HistoryWithRefs, type LicenseRow, type UserRow } from '../../../lib/db';
+import {
+  effectiveLicenseStatus,
+  fullName,
+  initials,
+  type HistoryWithRefs,
+  type LicenseRow,
+  type UserRow,
+} from '../../../lib/db';
 import { formatDate, formatDateTime, formatPrice, seatsBarClass, seatsPercent } from '../../../lib/format';
 import { parseId } from '../../../lib/forms';
 
@@ -72,7 +79,7 @@ const tagStyle = 'background:var(--md-tertiary-container);color:var(--md-on-tert
               </div>
               <div class="flex items-center gap-8" style="margin-top:4px">
                 <span class="asset-tag" style={tagStyle}>{license.asset_tag}</span>
-                <StatusChip status={license.status} />
+                <StatusChip status={effectiveLicenseStatus(license.expiry_date, license.status)} />
               </div>
             </div>
           </div>

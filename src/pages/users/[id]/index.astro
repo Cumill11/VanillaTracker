@@ -6,6 +6,7 @@ import Field from '../../../components/Field.astro';
 import Base from '../../../layouts/Base.astro';
 import {
   ASSET_STATUS,
+  LICENSE_STATUS_SQL,
   assetName,
   fullName,
   initials,
@@ -44,7 +45,7 @@ const [userResult, assetsResult, licensesResult, historyResult] = await db.batch
     .bind(id, ASSET_STATUS.ASSIGNED),
   db
     .prepare(
-      `SELECT l.id, l.asset_tag, l.name, l.status
+      `SELECT l.id, l.asset_tag, l.name, ${LICENSE_STATUS_SQL} AS status
          FROM licenses l
          JOIN license_users lu ON lu.license_id = l.id
         WHERE lu.user_id = ?

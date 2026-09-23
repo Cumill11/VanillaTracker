@@ -5,6 +5,7 @@ import Base from '../layouts/Base.astro';
 import {
   ASSET_STATUS,
   LICENSE_STATUS,
+  LICENSE_STATUS_SQL,
   addDaysIso,
   assetName,
   todayIso,
@@ -47,7 +48,7 @@ const [assetStats, otherStats, categories, warranties, licenses, history] = awai
   db.prepare(
     `SELECT (SELECT COUNT(*) FROM users)    AS total_users,
             (SELECT COUNT(*) FROM licenses) AS total_licenses,
-            (SELECT COUNT(*) FROM licenses WHERE status = ?) AS active_licenses`,
+            (SELECT COUNT(*) FROM licenses l WHERE ${LICENSE_STATUS_SQL} = ?) AS active_licenses`,
   ).bind(LICENSE_STATUS.ACTIVE),
 
   db.prepare(

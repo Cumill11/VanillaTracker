@@ -25,7 +25,7 @@ export function renderErrorPage(status: number): Response {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${status} — ${escapeHtml(title)}</title>
 <link rel="icon" type="image/svg+xml" href="/img/logo.svg">
-<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
     --md-primary:#D0BCFF; --md-on-primary:#381E72;
