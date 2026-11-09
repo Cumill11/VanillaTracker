@@ -15,7 +15,6 @@ interface Props {
 const { title, pageTitle = title } = Astro.props;
 const { session, t } = Astro.locals;
 
-const csrfToken = session.csrfToken;
 const messages = session.takeMessages();
 const path = Astro.url.pathname;
 
@@ -71,14 +70,6 @@ const navItems = [
 
       <div class="nav-spacer"></div>
 
-      <form method="post" action="/logout/">
-        <input type="hidden" name="csrf_token" value={csrfToken} />
-        <button type="submit" class="nav-item" title={t.nav_logout}>
-          <span class="material-icons-round">logout</span>
-          <span class="label">{t.nav_logout}</span>
-        </button>
-      </form>
-
       <div
         style="font-size:9px;color:var(--md-on-surface-variant);opacity:.35;text-align:center;padding:8px 4px 4px;letter-spacing:.3px;line-height:1.4"
       >
@@ -91,8 +82,6 @@ const navItems = [
         <h1>{pageTitle}</h1>
         <div class="flex items-center gap-8">
           <slot name="top-actions" />
-          <span class="text-muted text-sm top-bar-username">Administrator</span>
-          <div class="avatar">A</div>
         </div>
       </div>
 

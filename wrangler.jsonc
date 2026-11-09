@@ -22,6 +22,10 @@
   ],
   // Wyłącza adres vanillatracker.<subdomena>.workers.dev.
   "workers_dev": false,
+  // Wyłącza też Preview URLs (<wersja>-vanillatracker.<subdomena>.workers.dev).
+  // Aplikacja nie ma logowania, a Cloudflare Access chroni tylko
+  // assets.venicci.pl — podgląd wersji dawałby pełny dostęp do produkcyjnej D1.
+  "preview_urls": false,
 
   "d1_databases": [
     {
@@ -38,8 +42,6 @@
     "TAG_PREFIX": "BS"
   }
 
-  // Sekrety (ustaw przez `npx wrangler secret put <NAZWA>`):
-  //   ADMIN_USERNAME   — login administratora
-  //   ADMIN_PASSWORD   — hasło administratora
+  // Sekret (ustaw przez `npx wrangler secret put SESSION_SECRET`):
   //   SESSION_SECRET   — losowy klucz do podpisu ciasteczka sesji
 }

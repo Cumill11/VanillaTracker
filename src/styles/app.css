@@ -1034,9 +1034,6 @@ select.md3-select option {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .top-bar-username {
-    display: none;
-  }
   .top-bar .btn {
     padding: 8px 12px;
     font-size: 12px;

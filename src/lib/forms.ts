@@ -53,17 +53,6 @@ export function parseSeats(value: string): number {
   return n !== null && n > 0 ? n : 1;
 }
 
-/**
- * Odrzuca przekierowania na obcy host — parametr `next` pochodzi z URL-a
- * (port `_safe_redirect`).
- */
-export function safeRedirect(target: string | null | undefined): string {
-  if (!target) return '/';
-  // Blokujemy adresy absolutne (//evil.com, https://evil.com) i sterujące znaki.
-  if (!target.startsWith('/') || target.startsWith('//') || /[\r\n\\]/.test(target)) return '/';
-  return target;
-}
-
 /** Wzorzec do LIKE — escapujemy `%`, `_` i `\` (klauzula ESCAPE '\'). */
 export function likePattern(query: string): string {
   return `%${query.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;

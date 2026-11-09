@@ -12,7 +12,6 @@ Workers, dane trzyma w bazie D1.
 - Protokół przekazania (PDF A4) z tabelą sprzętu osoby i miejscem na podpis
 - Masowe przypisania i wydruk etykiet prosto z listy
 - Eksport CSV z tymi samymi filtrami co widok listy
-- Logowanie — aplikacja jest w całości prywatna
 
 ## Uruchomienie lokalne
 
@@ -20,7 +19,7 @@ Wymagany Node.js 20+ i konto Cloudflare.
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars   # uzupełnij ADMIN_USERNAME, ADMIN_PASSWORD, SESSION_SECRET
+cp .dev.vars.example .dev.vars   # uzupełnij SESSION_SECRET
 npm run db:migrate:local
 npm run dev
 ```
@@ -29,11 +28,9 @@ Aplikacja działa pod `http://localhost:4321`.
 
 ## Wdrożenie
 
-Sekrety na produkcji ustawia się raz przez wranglera:
+Sekret na produkcji ustawia się raz przez wranglera:
 
 ```bash
-npx wrangler secret put ADMIN_USERNAME
-npx wrangler secret put ADMIN_PASSWORD
 npx wrangler secret put SESSION_SECRET
 ```
 
@@ -56,21 +53,22 @@ Podczas git push następuje automatyczne wdrożenie na Cloudflare
 | `npm run db:migrate:local`  | Migracje bazy lokalnej          |
 | `npm run db:migrate:remote` | Migracje bazy produkcyjnej      |
 
-## Jak działa logowanie
+## Dostęp i sesja
 
-Jest jedno konto — dane logowania siedzą w sekretach Cloudflare, nie w bazie.
-Po zalogowaniu sesja jedzie w ciasteczku podpisanym HMAC-SHA256 (kluczem
-`SESSION_SECRET`, `HttpOnly`, `SameSite=Strict`). Middleware sprawdza sesję
-i token CSRF przy każdym żądaniu i bez sesji przekierowuje na `/login`.
-Logowanie ma limit 5 prób na 5 minut z jednego IP.
+Aplikacja nie ma logowania — każdy, kto otworzy adres, ma pełny dostęp.
+Jeśli ma być prywatna, ogranicz dostęp przed workerem (np. Cloudflare Access).
+
+Token CSRF i komunikaty jadą w ciasteczku podpisanym HMAC-SHA256 (kluczem
+`SESSION_SECRET`, `HttpOnly`, `SameSite=Strict`). Middleware sprawdza token
+CSRF przy każdym żądaniu zmieniającym dane.
 
 ## Struktura
 
 - `src/pages/` — trasy aplikacji (`assets/`, `licenses/`, `users/`,
-  `categories/`, `departments/`, `login/`)
-- `src/middleware.ts` — sesja, CSRF, wymóg zalogowania
+  `categories/`, `departments/`)
+- `src/middleware.ts` — sesja, CSRF
 - `src/lib/db.ts` — zapytania do D1, numeracja tagów, historia
-- `src/lib/auth.ts`, `session.ts`, `crypto.ts` — logowanie i sesja (WebCrypto)
+- `src/lib/session.ts`, `crypto.ts` — sesja w podpisanym ciasteczku (WebCrypto)
 - `src/lib/labels.ts` — etykiety i protokoły PDF z kodem QR
 - `src/styles/app.css` — globalny arkusz MD3
 - `migrations/` — schemat bazy i dane startowe

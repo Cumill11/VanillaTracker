@@ -8,6 +8,5 @@ declare namespace App {
     t: import('./lib/i18n').Translations;
     /** Ciało formularza, sparsowane raz w middleware (puste dla GET). */
     form: FormData;
-    isAdmin: boolean;
   }
 }

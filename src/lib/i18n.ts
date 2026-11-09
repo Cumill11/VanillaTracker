@@ -7,7 +7,6 @@ const pl = {
   nav_licenses: 'Licencje',
   nav_users: 'Ludzie',
   nav_types: 'Typy',
-  nav_logout: 'Wyloguj',
   // Statusy — sprzęt
   status_available: 'Dostępny',
   status_assigned: 'Przypisany',
@@ -193,14 +192,6 @@ const pl = {
   delete_title: 'Potwierdź usunięcie',
   delete_question: 'Czy na pewno chcesz usunąć:',
   delete_irreversible: 'Tej operacji nie można cofnąć.',
-  // Logowanie
-  login_subtitle: 'Zaloguj się, aby kontynuować',
-  login_username: 'Login',
-  login_password: 'Hasło',
-  login_btn: 'Zaloguj się',
-  login_invalid: 'Nieprawidłowy login lub hasło.',
-  login_not_configured:
-    'Logowanie nie jest skonfigurowane — ustaw sekrety ADMIN_USERNAME i ADMIN_PASSWORD.',
   // Strony błędów
   error_title: 'Błąd',
   error_unknown: 'Wystąpił nieoczekiwany błąd.',
@@ -210,8 +201,6 @@ const pl = {
     'Brak uprawnień lub Twoja sesja wygasła. Odśwież stronę i spróbuj ponownie.',
   error_404_title: 'Nie znaleziono strony',
   error_404_msg: 'Strona, której szukasz, nie istnieje lub została przeniesiona.',
-  error_429_title: 'Zbyt wiele żądań',
-  error_429_msg: 'Zbyt wiele prób. Odczekaj kilka minut i spróbuj ponownie.',
   error_500_title: 'Błąd serwera',
   error_500_msg: 'Coś poszło nie tak po naszej stronie. Spróbuj ponownie za chwilę.',
   // Komunikaty (snackbar). {…} podstawiamy przez `fmt`.

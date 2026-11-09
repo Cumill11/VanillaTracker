@@ -1,13 +1,11 @@
 /**
- * Middleware: nagłówki bezpieczeństwa, sesja, ochrona CSRF, odczyt formularza
- * i wymóg zalogowania.
+ * Middleware: nagłówki bezpieczeństwa, sesja, ochrona CSRF i odczyt formularza.
  *
- * Zastępuje `@app.before_request`, `login_required` i `verify_csrf` z wersji
- * Flask. CSRF sprawdzamy centralnie dla każdego żądania zmieniającego stan,
- * więc pojedyncza trasa nie może o tym zapomnieć.
+ * Zastępuje `@app.before_request` i `verify_csrf` z wersji Flask. CSRF
+ * sprawdzamy centralnie dla każdego żądania zmieniającego stan, więc
+ * pojedyncza trasa nie może o tym zapomnieć.
  */
 import { defineMiddleware } from 'astro:middleware';
-import { isPublicPath } from './lib/auth';
 import { env } from './lib/env';
 import { renderErrorPage } from './lib/errorPage';
 import { translations } from './lib/i18n';
@@ -37,7 +35,7 @@ function secured(response: Response): Response {
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const { locals, request, url, cookies } = context;
+  const { locals, request, cookies } = context;
 
   locals.t = translations;
   locals.form = new FormData();
@@ -56,7 +54,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const session = await Session.load(cookies.get(COOKIE_NAME)?.value, secret);
   locals.session = session;
-  locals.isAdmin = session.isAdmin;
 
   /**
    * Zapisuje sesję, jeśli zmieniła się w trakcie żądania. Astro dokleja
@@ -67,8 +64,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!session.dirty) return;
     cookies.set(COOKIE_NAME, await session.serialize(secret), SESSION_COOKIE_OPTIONS);
   };
-
-  const pathname = url.pathname;
 
   // Ochrona CSRF — token z sesji musi zgadzać się z polem formularza.
   if (UNSAFE_METHODS.has(request.method)) {
@@ -91,13 +86,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!session.verifyCsrf(typeof token === 'string' ? token : null)) {
       return secured(renderErrorPage(403));
     }
-  }
-
-  // Wymóg zalogowania (odpowiednik `login_required` na każdej trasie).
-  if (!session.isAdmin && !isPublicPath(pathname)) {
-    const target = `${pathname}${url.search}`;
-    await persistSession();
-    return secured(context.redirect(`/login/?next=${encodeURIComponent(target)}`));
   }
 
   const response = await next();

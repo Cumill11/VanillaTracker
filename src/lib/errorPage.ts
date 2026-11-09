@@ -1,5 +1,5 @@
 /**
- * Samodzielna strona błędu (403/404/429/500).
+ * Samodzielna strona błędu (403/404/500).
  *
  * Nie korzysta z layoutu ani z bazy, bo bywa zwracana z middleware — zanim
  * cokolwiek zdąży się wyrenderować. Odpowiada `error.html` z wersji Flask.

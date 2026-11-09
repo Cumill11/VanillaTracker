@@ -1,7 +1,4 @@
-/**
- * Kryptografia oparta wyłącznie na WebCrypto — bcrypt (wersja Flask) wymaga
- * kodu natywnego, którego Cloudflare Workers nie uruchomią.
- */
+/** Kryptografia oparta wyłącznie na WebCrypto (podpis ciasteczka sesji). */
 
 const enc = new TextEncoder();
 
@@ -33,21 +30,6 @@ export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a[i]! ^ b[i]!;
   return diff === 0;
-}
-
-async function sha256(text: string): Promise<Uint8Array> {
-  return new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(text)));
-}
-
-/**
- * Porównanie dwóch napisów w stałym czasie.
- *
- * Zestawiamy skróty SHA-256, a nie same napisy — dzięki temu obie strony mają
- * zawsze 32 bajty i czas odpowiedzi nie zdradza nawet długości sekretu.
- */
-export async function secretEquals(a: string, b: string): Promise<boolean> {
-  const [da, db] = await Promise.all([sha256(a), sha256(b)]);
-  return timingSafeEqual(da, db);
 }
 
 /** HMAC-SHA256 użyte do podpisania ciasteczka sesji. */

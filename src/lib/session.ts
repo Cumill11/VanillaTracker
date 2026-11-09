@@ -2,7 +2,7 @@
  * Sesja w podpisanym ciasteczku.
  *
  * Workers nie mają pamięci współdzielonej między requestami, więc cały stan
- * sesji (zalogowanie, token CSRF, komunikaty flash) jedzie w ciasteczku
+ * sesji (token CSRF, komunikaty flash) jedzie w ciasteczku
  * podpisanym HMAC-SHA256. Zawartość jest jawna, ale niemodyfikowalna bez
  * znajomości SESSION_SECRET.
  */
@@ -21,8 +21,6 @@ export const SESSION_COOKIE_OPTIONS = {
 } as const;
 
 type SessionData = {
-  /** Czy administrator jest zalogowany. */
-  a: boolean;
   /** Token CSRF. */
   c: string;
   /** Komunikaty flash. */
@@ -39,7 +37,7 @@ function nowSeconds(): number {
 }
 
 function freshData(): SessionData {
-  return { a: false, c: randomToken(), m: [], e: nowSeconds() + MAX_AGE_SECONDS };
+  return { c: randomToken(), m: [], e: nowSeconds() + MAX_AGE_SECONDS };
 }
 
 export class Session {
@@ -58,23 +56,8 @@ export class Session {
     return new Session(data, false);
   }
 
-  get isAdmin(): boolean {
-    return this.data.a;
-  }
-
   get csrfToken(): string {
     return this.data.c;
-  }
-
-  login(): void {
-    // Nowy token CSRF przy zmianie poziomu uprawnień (ochrona przed session fixation).
-    this.data = { a: true, c: randomToken(), m: this.data.m, e: nowSeconds() + MAX_AGE_SECONDS };
-    this.dirty = true;
-  }
-
-  logout(): void {
-    this.data = freshData();
-    this.dirty = true;
   }
 
   addMessage(text: string): void {
@@ -125,7 +108,7 @@ async function verifyCookie(value: string, secret: string): Promise<SessionData 
     const data = JSON.parse(decoder.decode(fromBase64Url(payload))) as SessionData;
     if (typeof data?.c !== 'string' || typeof data?.e !== 'number') return null;
     if (data.e < nowSeconds()) return null;
-    return { a: data.a === true, c: data.c, m: Array.isArray(data.m) ? data.m : [], e: data.e };
+    return { c: data.c, m: Array.isArray(data.m) ? data.m : [], e: data.e };
   } catch {
     return null;
   }
