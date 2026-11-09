@@ -76,7 +76,7 @@ export const assetForm = {
   read: (form: FormData) => readForm(form, ASSET_FIELDS),
   fromRow: (row: object) => formFromRow(row, ASSET_FIELDS),
 
-  /** Port `_validate_asset` — wymagane: kategoria, producent, model. */
+  /** Port `_validate_asset` - wymagane: kategoria, producent, model. */
   validate(data: AssetFormData, t: Translations): Errors {
     const errors: Errors = {};
     if (parseInteger(data.category_id) === null) errors.category = required(t);
@@ -128,7 +128,7 @@ export const licenseForm = {
 
   fromRow(row: object) {
     const data = formFromRow(row, LICENSE_FIELDS, LICENSE_DEFAULTS);
-    // „expired" nie jest wyborem użytkownika — w formularzu pokazujemy „active".
+    // „expired" nie jest wyborem użytkownika - w formularzu pokazujemy „active".
     if (data.status !== LICENSE_STATUS.INACTIVE) data.status = LICENSE_STATUS.ACTIVE;
     return data;
   },

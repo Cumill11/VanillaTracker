@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "VanillaTracker — ewidencja sprzętu i licencji (Astro + Cloudflare Workers + D1)",
+  "description": "VanillaTracker - ewidencja sprzętu i licencji (Astro + Cloudflare Workers + D1)",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

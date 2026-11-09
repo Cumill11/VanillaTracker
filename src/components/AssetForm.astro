@@ -1,5 +1,5 @@
 ---
-/** Formularz sprzętu — port `asset_form.html`, wspólny dla dodawania i edycji. */
+/** Formularz sprzętu - port `asset_form.html`, wspólny dla dodawania i edycji. */
 import FormCard from './FormCard.astro';
 import FormField from './FormField.astro';
 import FormShell from './FormShell.astro';
@@ -22,7 +22,7 @@ interface Props {
 const { action, cancelHref, categories, data, errors, users, assignUserId = '' } = Astro.props;
 const { t } = Astro.locals;
 
-// Dane zakupu bywają wypełniane rzadko, więc sekcja jest zwinięta — chyba że
+// Dane zakupu bywają wypełniane rzadko, więc sekcja jest zwinięta - chyba że
 // edytowany sprzęt już coś w niej ma.
 const hasPurchaseData = Boolean(
   data.purchase_date || data.purchase_price || data.warranty_expiry,

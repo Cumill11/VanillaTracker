@@ -1,6 +1,6 @@
 # VanillaTracker
 
-Ewidencja sprzętu, licencji i osób — z numerami inwentarzowymi, etykietami
+Ewidencja sprzętu, licencji i osób - z numerami inwentarzowymi, etykietami
 i protokołami przekazania. Napisana w Astro (SSR), działa na Cloudflare
 Workers, dane trzyma w bazie D1.
 
@@ -55,7 +55,7 @@ Podczas git push następuje automatyczne wdrożenie na Cloudflare
 
 ## Dostęp i sesja
 
-Aplikacja nie ma logowania — każdy, kto otworzy adres, ma pełny dostęp.
+Aplikacja nie ma logowania - każdy, kto otworzy adres, ma pełny dostęp.
 Jeśli ma być prywatna, ogranicz dostęp przed workerem (np. Cloudflare Access).
 
 Token CSRF i komunikaty jadą w ciasteczku podpisanym HMAC-SHA256 (kluczem
@@ -64,11 +64,11 @@ CSRF przy każdym żądaniu zmieniającym dane.
 
 ## Struktura
 
-- `src/pages/` — trasy aplikacji (`assets/`, `licenses/`, `users/`,
+- `src/pages/` - trasy aplikacji (`assets/`, `licenses/`, `users/`,
   `categories/`, `departments/`)
-- `src/middleware.ts` — sesja, CSRF
-- `src/lib/db.ts` — zapytania do D1, numeracja tagów, historia
-- `src/lib/session.ts`, `crypto.ts` — sesja w podpisanym ciasteczku (WebCrypto)
-- `src/lib/labels.ts` — etykiety i protokoły PDF z kodem QR
-- `src/styles/app.css` — globalny arkusz MD3
-- `migrations/` — schemat bazy i dane startowe
+- `src/middleware.ts` - sesja, CSRF
+- `src/lib/db.ts` - zapytania do D1, numeracja tagów, historia
+- `src/lib/session.ts`, `crypto.ts` - sesja w podpisanym ciasteczku (WebCrypto)
+- `src/lib/labels.ts`, `protocol.ts` - etykiety PDF z kodem QR i protokół przekazania
+- `src/styles/app.css` - globalny arkusz MD3
+- `migrations/` - schemat bazy i dane startowe

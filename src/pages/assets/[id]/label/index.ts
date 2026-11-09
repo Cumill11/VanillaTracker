@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { generateLabelsPdf, pdfResponse } from '../../../../lib/labels';
 import { parseId } from '../../../../lib/forms';
 
-/** Etykieta PDF pojedynczego sprzętu — port `GET /assets/<pk>/label/`. */
+/** Etykieta PDF pojedynczego sprzętu - port `GET /assets/<pk>/label/`. */
 export const GET: APIRoute = async ({ params, locals, url, redirect }) => {
   const db = locals.db;
 

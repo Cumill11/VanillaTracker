@@ -8,7 +8,7 @@ dist/
 .dev.vars
 .env
 
-# Dane firmowe — repozytorium jest publiczne.
+# Dane firmowe - repozytorium jest publiczne.
 # Zrzut ze starej bazy i wygenerowany z niego plik importu zawierają imiona,
 # nazwiska, adresy e-mail i telefony pracowników.
 /venicciasset.sql

@@ -1,6 +1,6 @@
-/** Filtry prezentacyjne — port filtrów Jinja z `app.py`. */
+/** Filtry prezentacyjne - port filtrów Jinja z `app.py`. */
 
-const DASH = '—';
+const DASH = '-';
 
 /** Strefa dla znaczników czasu; daty kalendarzowe formatowane są bez konwersji. */
 const TIMEZONE = 'Europe/Warsaw';
@@ -66,13 +66,13 @@ export function formatDateTime(value: string | null | undefined): string {
   return `${get('day')}.${get('month')}.${get('year')} ${get('hour')}:${get('minute')}`;
 }
 
-/** Cena trzymana jest jako TEXT — pokazujemy ją z dopiskiem waluty. */
+/** Cena trzymana jest jako TEXT - pokazujemy ją z dopiskiem waluty. */
 export function formatPrice(value: string | null | undefined): string | null {
   if (!value) return null;
   return `${value} PLN`;
 }
 
-/** Wypełnienie paska stanowisk licencji (0–100). */
+/** Wypełnienie paska stanowisk licencji (0-100). */
 export function seatsPercent(used: number, seats: number): number {
   if (!seats) return 0;
   return Math.min(100, Math.trunc((used / seats) * 100));

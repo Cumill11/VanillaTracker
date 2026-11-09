@@ -1,4 +1,4 @@
-/** Stronicowanie — port `pagination.py` na zapytania D1. */
+/** Stronicowanie - port `pagination.py` na zapytania D1. */
 import type { D1Database } from '@cloudflare/workers-types';
 
 const PER_PAGE = 25;
@@ -33,7 +33,7 @@ type PageQuery = {
  * Liczbę wszystkich pasujących wierszy bierzemy z funkcji okna `COUNT(*) OVER ()`,
  * którą SQLite liczy przed zastosowaniem `LIMIT`. Dzięki temu wystarcza jedno
  * zapytanie zamiast osobnego `SELECT COUNT(*)`, a warunek `WHERE` jest zapisany
- * w jednym miejscu — wcześniej każda lista powtarzała go dwa razy.
+ * w jednym miejscu - wcześniej każda lista powtarzała go dwa razy.
  */
 export async function paginate<T>(db: D1Database, query: PageQuery): Promise<Page<T>> {
   const { columns, from, where = '', orderBy, args = [], page, perPage = PER_PAGE } = query;

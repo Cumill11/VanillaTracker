@@ -24,7 +24,7 @@ export function fromBase64Url(s: string): Uint8Array {
   return fromBase64(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
 }
 
-/** Porównanie w stałym czasie — nie zdradza, ile bajtów się zgadza. */
+/** Porównanie w stałym czasie - nie zdradza, ile bajtów się zgadza. */
 export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;

@@ -1,5 +1,5 @@
 ---
-/** Lista osób — port `user_list.html`. */
+/** Lista osób - port `user_list.html`. */
 import Pagination from '../../components/Pagination.astro';
 import Base from '../../layouts/Base.astro';
 import { ASSET_STATUS, fullName, initials, type DepartmentRow, type UserRow } from '../../lib/db';
@@ -117,16 +117,16 @@ const departments = departmentsResult.results ?? [];
                       </div>
                     </div>
                   </td>
-                  <td class="col-hide-sm">{u.department_name || '—'}</td>
-                  <td class="col-hide-sm">{u.email || '—'}</td>
-                  <td class="col-hide-sm">{u.phone || '—'}</td>
+                  <td class="col-hide-sm">{u.department_name || '-'}</td>
+                  <td class="col-hide-sm">{u.email || '-'}</td>
+                  <td class="col-hide-sm">{u.phone || '-'}</td>
                   <td>
                     {u.asset_count ? (
                       <span class="asset-tag" style="font-size:12px">
                         {u.asset_count}
                       </span>
                     ) : (
-                      '—'
+                      '-'
                     )}
                   </td>
                   <td>

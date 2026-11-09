@@ -1,10 +1,10 @@
 /**
- * Filtry listy sprzętu — wspólne dla widoku HTML i eksportu CSV, żeby
+ * Filtry listy sprzętu - wspólne dla widoku HTML i eksportu CSV, żeby
  * „Eksport" oddawał dokładnie to, co widać na ekranie.
  */
 import { likePattern } from './forms';
 
-/** Białа lista sortowań — wartość trafia wprost do `ORDER BY`. */
+/** Biała lista sortowań - wartość trafia wprost do `ORDER BY`. */
 const SORTS: Record<string, string> = {
   tag_number: 'a.tag_number',
   '-tag_number': 'a.tag_number DESC',
@@ -40,7 +40,7 @@ export function assetFilters(params: URLSearchParams): AssetFilters {
   const args: unknown[] = [];
 
   if (q) {
-    // Parametr powtórzony dla każdej kolumny — D1 nie lubi mieszania
+    // Parametr powtórzony dla każdej kolumny - D1 nie lubi mieszania
     // numerowanych (?1) i anonimowych (?) placeholderów w jednym zapytaniu.
     const columns = [
       'a.asset_tag',

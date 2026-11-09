@@ -11,7 +11,7 @@ import { field, parseId, parseInteger } from '../../../../lib/forms';
 import { fmt } from '../../../../lib/i18n';
 import { NOTES } from '../../../../lib/notes';
 
-/** Przypisanie sprzętu do działu — port `POST /assets/<pk>/assign-dept/`. */
+/** Przypisanie sprzętu do działu - port `POST /assets/<pk>/assign-dept/`. */
 export const POST: APIRoute = async ({ params, locals, redirect }) => {
   const { t, session, db } = locals;
 

@@ -1,5 +1,5 @@
 ---
-/** Edycja sprzętu — port tras `GET/POST /assets/<pk>/edit/`. */
+/** Edycja sprzętu - port tras `GET/POST /assets/<pk>/edit/`. */
 import AssetForm from '../../../../components/AssetForm.astro';
 import Base from '../../../../layouts/Base.astro';
 import { nowIso, type AssetRow, type CategoryRow } from '../../../../lib/db';
@@ -13,7 +13,7 @@ const { t, session, db } = Astro.locals;
 const id = parseId(Astro.params.id);
 if (id === null) return Astro.redirect('/assets/');
 
-// Jedno okrążenie do bazy zamiast dwóch — kategorie i tak są potrzebne przy
+// Jedno okrążenie do bazy zamiast dwóch - kategorie i tak są potrzebne przy
 // renderowaniu formularza.
 const [assetResult, categoriesResult] = await db.batch([
   db.prepare('SELECT * FROM assets WHERE id = ?').bind(id),

@@ -2,7 +2,7 @@
 /**
  * Etykieta z wartością w siatce szczegółów.
  *
- * Bez atrybutu `value` renderuje slot — dla wartości z własnym znacznikiem
+ * Bez atrybutu `value` renderuje slot - dla wartości z własnym znacznikiem
  * (odznaka kategorii, pasek stanowisk).
  */
 interface Props {
@@ -25,7 +25,7 @@ const classes = valueClass ? `field-value ${valueClass}` : 'field-value';
         <slot />
       </span>
     ) : (
-      <span class={classes}>{value || '—'}</span>
+      <span class={classes}>{value || '-'}</span>
     )
   }
 </div>

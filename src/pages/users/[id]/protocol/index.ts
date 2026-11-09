@@ -13,7 +13,7 @@ type ProtocolAssetRow = {
   serial_number: string | null;
 };
 
-/** Protokół przekazania sprzętu dla osoby — `GET /users/<pk>/protocol/`. */
+/** Protokół przekazania sprzętu dla osoby - `GET /users/<pk>/protocol/`. */
 export const GET: APIRoute = async ({ params, locals, redirect }) => {
   const { t, db } = locals;
 

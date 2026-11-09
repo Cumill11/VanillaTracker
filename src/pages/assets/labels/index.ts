@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { fieldList, parseInteger } from '../../../lib/forms';
 import { generateLabelsPdf, pdfResponse } from '../../../lib/labels';
 
-/** Etykiety zbiorcze — port `POST /assets/labels/`. */
+/** Etykiety zbiorcze - port `POST /assets/labels/`. */
 export const POST: APIRoute = async ({ locals, url, redirect }) => {
   const { t, session, db } = locals;
 

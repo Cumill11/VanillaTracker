@@ -1,8 +1,8 @@
 ---
 /**
- * Usuwanie osoby — port tras `GET/POST /users/<pk>/delete/`.
+ * Usuwanie osoby - port tras `GET/POST /users/<pk>/delete/`.
  *
- * Osoby z przypisanym sprzętem lub licencjami blokujemy — najpierw trzeba je
+ * Osoby z przypisanym sprzętem lub licencjami blokujemy - najpierw trzeba je
  * odpiąć, żeby nie zgubić powiązań.
  */
 import ConfirmDelete from '../../../../components/ConfirmDelete.astro';
@@ -42,7 +42,7 @@ if (blockers.length > 0) {
 }
 
 if (Astro.request.method === 'POST') {
-  // Historia zostaje — czyścimy tylko wskazanie na usuwaną osobę.
+  // Historia zostaje - czyścimy tylko wskazanie na usuwaną osobę.
   await db.batch([
     db.prepare('UPDATE asset_history SET user_id = NULL WHERE user_id = ?').bind(id),
     db.prepare('DELETE FROM users WHERE id = ?').bind(id),

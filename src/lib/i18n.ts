@@ -1,4 +1,4 @@
-/** Teksty interfejsu — port `i18n.py`, bez kluczy kreatora setup i haseł użytkowników. */
+/** Teksty interfejsu - port `i18n.py`, bez kluczy kreatora setup i haseł użytkowników. */
 
 const pl = {
   // Nawigacja
@@ -7,18 +7,19 @@ const pl = {
   nav_licenses: 'Licencje',
   nav_users: 'Ludzie',
   nav_types: 'Typy',
-  // Statusy — sprzęt
+  // Statusy - sprzęt
   status_available: 'Dostępny',
   status_assigned: 'Przypisany',
   status_maintenance: 'Serwis',
   status_retired: 'Wycofany',
-  // Statusy — licencje
+  // Statusy - licencje
   status_active: 'Aktywna',
   status_expired: 'Wygasła',
   status_inactive: 'Nieaktywna',
   // Akcje historii
   action_assign: 'Przypisanie',
   action_return: 'Zwrot',
+  action_unassign: 'Odpięcie',
   action_maintenance: 'Serwis',
   action_note: 'Notatka',
   action_status: 'Zmiana statusu',
@@ -37,8 +38,8 @@ const pl = {
   lbl_info: 'Informacje',
   lbl_created: 'Dodano',
   lbl_updated: 'Zaktualizowano',
-  lbl_select: '— wybierz —',
-  lbl_none: '— brak —',
+  lbl_select: '- wybierz -',
+  lbl_none: '- brak -',
   lbl_search: 'Szukaj...',
   lbl_all_statuses: 'Wszystkie statusy',
   lbl_all_categories: 'Wszystkie kategorie',
@@ -92,7 +93,7 @@ const pl = {
   assets_export: 'Eksport CSV',
   assets_bulk_assign: 'Przypisz zaznaczone',
   assets_bulk_selected: 'zaznaczonych',
-  assets_bulk_pick_user: '— wybierz osobę —',
+  assets_bulk_pick_user: '- wybierz osobę -',
   user_protocol: 'Protokół przekazania',
   protocol_title: 'Protokół przekazania sprzętu',
   protocol_person: 'Osoba przejmująca',
@@ -207,12 +208,14 @@ const pl = {
   msg_asset_added: 'Sprzęt {tag} został dodany.',
   msg_assets_assigned: 'Przypisano {count} szt. sprzętu do {name}.',
   msg_bulk_none_selected: 'Nie wybrano żadnego sprzętu.',
+  msg_bulk_none_available: 'Nic nie przypisano - przypisać można tylko sprzęt o statusie "Dostępny".',
+  msg_bulk_skipped: 'Pominięto {count} szt. niedostępnego sprzętu.',
   msg_asset_updated: 'Sprzęt {tag} zaktualizowany.',
   msg_asset_deleted: 'Sprzęt {tag} usunięty.',
   msg_asset_assigned: '{tag} przypisany do {name}.',
   msg_asset_returned: '{tag} zwrócony.',
   msg_asset_dept_set: '{tag} przypisany do działu {name}.',
-  msg_asset_dept_cleared: '{tag} — usunięto przypisanie do działu.',
+  msg_asset_dept_cleared: '{tag} - usunięto przypisanie do działu.',
   msg_asset_status_changed: '{tag}: {note}',
   msg_labels_none_selected: 'Nie wybrano żadnego sprzętu do wydruku.',
   msg_labels_not_found: 'Nie znaleziono wybranego sprzętu.',
@@ -223,7 +226,7 @@ const pl = {
   msg_user_added: 'Użytkownik {name} dodany.',
   msg_user_updated: 'Użytkownik zaktualizowany.',
   msg_user_deleted: 'Pracownik {name} został usunięty.',
-  msg_user_blocked: 'Nie można usunąć pracownika {name} — najpierw odepnij: {blockers}.',
+  msg_user_blocked: 'Nie można usunąć pracownika {name} - najpierw odepnij: {blockers}.',
   msg_blocker_assets: 'przypisany sprzęt ({count})',
   msg_blocker_licenses: 'przypisane licencje ({count})',
   msg_dept_added: 'Dział {name} dodany.',
@@ -239,7 +242,7 @@ export type Translations = Record<TKey, string>;
 export const translations: Translations = pl;
 
 /**
- * Odpowiednik `t.get(klucz, domyślne)` z szablonów Jinja — dla kluczy
+ * Odpowiednik `t.get(klucz, domyślne)` z szablonów Jinja - dla kluczy
  * składanych w locie, np. `status_${status}` albo `cat_${slug}`.
  */
 export function tk(t: Translations, key: string, fallback: string): string {

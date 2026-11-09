@@ -1,7 +1,7 @@
 /**
  * Dostęp do bindings i sekretów Workera.
  *
- * Od Astro 6 `Astro.locals.runtime.env` już nie istnieje — środowisko czyta się
+ * Od Astro 6 `Astro.locals.runtime.env` już nie istnieje - środowisko czyta się
  * z modułu `cloudflare:workers`. Trzymamy tu jedno, otypowane wejście, żeby
  * reszta kodu nie musiała rzutować.
  */
@@ -11,7 +11,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 type AppEnv = {
   /** Baza D1 (binding `DB`). */
   DB: D1Database;
-  /** Klucz podpisujący ciasteczko sesji — sekret. */
+  /** Klucz podpisujący ciasteczko sesji - sekret. */
   SESSION_SECRET?: string;
   /** Prefiks numerów inwentarzowych (zmienna, nie sekret). */
   TAG_PREFIX?: string;

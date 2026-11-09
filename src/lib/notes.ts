@@ -1,11 +1,12 @@
 /**
  * Treści notatek zapisywanych w historii.
  *
- * To dane, a nie warstwa prezentacji — trafiają do bazy i mają zostać takie
+ * To dane, a nie warstwa prezentacji - trafiają do bazy i mają zostać takie
  * same niezależnie od języka interfejsu, dlatego nie przechodzą przez i18n.
  */
 export const NOTES = {
   ASSET_CREATED: 'Sprzęt dodany do systemu.',
+  LICENSE_CREATED: 'Licencja dodana do systemu.',
   STATUS_AVAILABLE: 'Oznaczono jako dostępny.',
   STATUS_MAINTENANCE: 'Przekazano do serwisu.',
   STATUS_RETIRED: 'Wycofano z użytku.',

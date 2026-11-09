@@ -11,7 +11,7 @@ import {
 import { field, parseDate, parseId, parseInteger } from '../../../../lib/forms';
 import { fmt } from '../../../../lib/i18n';
 
-/** Przypisanie sprzętu do osoby — port `POST /assets/<pk>/assign/`. */
+/** Przypisanie sprzętu do osoby - port `POST /assets/<pk>/assign/`. */
 export const POST: APIRoute = async ({ params, locals, redirect }) => {
   const { t, session, db } = locals;
 
@@ -25,13 +25,20 @@ export const POST: APIRoute = async ({ params, locals, redirect }) => {
 
   // Sprzęt i osoba są wyszukiwane niezależnie, więc jednym okrążeniem.
   const [assetResult, userResult] = await db.batch([
-    db.prepare('SELECT id, asset_tag FROM assets WHERE id = ?').bind(id),
+    db.prepare('SELECT id, asset_tag, status, assigned_to_id FROM assets WHERE id = ?').bind(id),
     db.prepare('SELECT id, first_name, last_name FROM users WHERE id = ?').bind(userId ?? 0),
   ]);
 
-  const asset = (assetResult.results as Pick<AssetRow, 'id' | 'asset_tag'>[])[0];
+  const asset = (
+    assetResult.results as Pick<AssetRow, 'id' | 'asset_tag' | 'status' | 'assigned_to_id'>[]
+  )[0];
 
-  if (asset && userId !== null) {
+  // Przypisać można tylko sprzęt dostępny - karta sprzętu pokazuje formularz
+  // wyłącznie wtedy, a tu pilnujemy tego samego po stronie serwera.
+  const assignable =
+    asset && asset.status === ASSET_STATUS.AVAILABLE && asset.assigned_to_id === null;
+
+  if (assignable && userId !== null) {
     const user = (userResult.results as Pick<UserRow, 'id' | 'first_name' | 'last_name'>[])[0];
 
     if (user) {

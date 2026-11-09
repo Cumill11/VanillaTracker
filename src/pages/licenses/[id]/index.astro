@@ -1,5 +1,5 @@
 ---
-/** Szczegóły licencji — port `license_detail.html`. */
+/** Szczegóły licencji - port `license_detail.html`. */
 import HistoryTimeline from '../../../components/HistoryTimeline.astro';
 import StatusChip from '../../../components/StatusChip.astro';
 import Field from '../../../components/Field.astro';
@@ -25,8 +25,9 @@ const [licenseResult, historyResult, usersResult, assignedResult] = await db.bat
   db
     .prepare(
       `SELECT h.*, NULL AS asset_tag, NULL AS license_tag,
-              NULL AS user_first_name, NULL AS user_last_name
+              u.first_name AS user_first_name, u.last_name AS user_last_name
          FROM asset_history h
+         LEFT JOIN users u ON u.id = h.user_id
         WHERE h.license_id = ?
         ORDER BY h.created_at DESC, h.id DESC`,
     )
@@ -120,7 +121,7 @@ const tagStyle = 'background:var(--md-tertiary-container);color:var(--md-on-tert
           <h2>{t.lbl_history}</h2>
         </div>
         <div class="card-body">
-          <HistoryTimeline items={history} />
+          <HistoryTimeline items={history} showUser />
         </div>
       </div>
     </div>

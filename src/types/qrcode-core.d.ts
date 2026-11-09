@@ -1,5 +1,5 @@
 /**
- * Typy dla `qrcode/lib/core/qrcode.js` — pakiet `qrcode` nie dostarcza własnych,
+ * Typy dla `qrcode/lib/core/qrcode.js` - pakiet `qrcode` nie dostarcza własnych,
  * a sięgamy po sam koder z pominięciem rendererów canvas/SVG (te wymagają DOM).
  */
 declare module 'qrcode/lib/core/qrcode.js' {

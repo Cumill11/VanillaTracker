@@ -2,11 +2,11 @@
  * INSERT i UPDATE budowane z mapy `kolumna → wartość`.
  *
  * Ręcznie pisane zapytania wymagały trzymania w zgodzie listy kolumn i listy
- * wiązań — przestawienie jednego pola cicho zapisywało dane w złej kolumnie.
+ * wiązań - przestawienie jednego pola cicho zapisywało dane w złej kolumnie.
  * Tutaj oba wynikają z tego samego obiektu.
  *
  * Nazwy tabel i kolumn pochodzą wyłącznie z literałów w kodzie (nigdy z danych
- * użytkownika), a wartości idą przez parametry — SQL injection nie wchodzi w grę.
+ * użytkownika), a wartości idą przez parametry - SQL injection nie wchodzi w grę.
  */
 import type { D1Database } from '@cloudflare/workers-types';
 

@@ -1,5 +1,5 @@
 ---
-/** Lista sprzętu — port `asset_list.html`. */
+/** Lista sprzętu - port `asset_list.html`. */
 import Pagination from '../../components/Pagination.astro';
 import StatusChip from '../../components/StatusChip.astro';
 import Base from '../../layouts/Base.astro';
@@ -215,7 +215,7 @@ const sortHref = (key: string) =>
                         {tk(t, `cat_${asset.category_slug}`, asset.category_name ?? '')}
                       </span>
                     ) : (
-                      '—'
+                      '-'
                     )}
                   </td>
                   <td>
@@ -237,7 +237,7 @@ const sortHref = (key: string) =>
                         {asset.department_name}
                       </span>
                     ) : (
-                      '—'
+                      '-'
                     )}
                   </td>
                   <td>

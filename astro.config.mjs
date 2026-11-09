@@ -5,7 +5,7 @@ import cloudflare from '@astrojs/cloudflare';
 export default defineConfig({
   output: 'server',
   adapter: cloudflare({
-    // Bez bindingu Images — aplikacja nie przetwarza obrazów, jedyny zasób
+    // Bez bindingu Images - aplikacja nie przetwarza obrazów, jedyny zasób
     // graficzny to statyczne logo SVG.
     imageService: 'passthrough',
   }),
@@ -20,7 +20,7 @@ export default defineConfig({
     // Obejście withastro/astro#17893 / #17788 (jak w pozostałych projektach):
     // adapter Cloudflare nie dopisuje tych modułów do SSR optimizeDeps, więc przy
     // zimnym cache `.vite` Vite odkrywa je w trakcie żądania i `astro dev` pada.
-    // Tylko dev — build produkcyjny ignoruje optimizeDeps.
+    // Tylko dev - build produkcyjny ignoruje optimizeDeps.
     ssr: {
       optimizeDeps: {
         include: [

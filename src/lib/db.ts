@@ -29,7 +29,7 @@ export const LICENSE_STATUS_VALUES = [
   LICENSE_STATUS.INACTIVE,
 ] as const;
 
-/** Statusy, które można ustawić ręcznie — „expired" wynika z daty wygaśnięcia. */
+/** Statusy, które można ustawić ręcznie - „expired" wynika z daty wygaśnięcia. */
 export const LICENSE_MANUAL_STATUS_VALUES = [
   LICENSE_STATUS.ACTIVE,
   LICENSE_STATUS.INACTIVE,
@@ -38,6 +38,8 @@ export const LICENSE_MANUAL_STATUS_VALUES = [
 export const HISTORY_ACTION = {
   ASSIGN: 'assign',
   RETURN: 'return',
+  /** Odpięcie osoby od licencji (odpowiednik zwrotu sprzętu). */
+  UNASSIGN: 'unassign',
   MAINTENANCE: 'maintenance',
   NOTE: 'note',
   STATUS: 'status',
@@ -145,22 +147,22 @@ export function addDaysIso(days: number): string {
 type NamedPerson = { first_name: string; last_name: string };
 
 export function fullName(user: NamedPerson): string {
-  return `${user.first_name} ${user.last_name}`.trim() || '—';
+  return `${user.first_name} ${user.last_name}`.trim() || '-';
 }
 
 /**
- * Nazwa sprzętu — składana z producenta i modelu.
+ * Nazwa sprzętu - składana z producenta i modelu.
  *
  * Sprzęt nie ma osobnego pola z nazwą: było ono kopią tych dwóch wartości,
  * więc rozjeżdżało się przy edycji i dublowało w listach.
  */
 export function assetName(asset: { manufacturer: string; model_name: string }): string {
-  return `${asset.manufacturer} ${asset.model_name}`.trim() || '—';
+  return `${asset.manufacturer} ${asset.model_name}`.trim() || '-';
 }
 
 export function initials(user: NamedPerson): string {
   const name = fullName(user);
-  return name === '—' ? '?' : name[0]!.toUpperCase();
+  return name === '-' ? '?' : name[0]!.toUpperCase();
 }
 
 /**
@@ -168,7 +170,7 @@ export function initials(user: NamedPerson): string {
  *
  * Najpierw sięga po numer zwolniony przez usunięty obiekt (tag_pool), a dopiero
  * potem zwiększa licznik. Oba zapytania są atomowe w obrębie pojedynczego
- * `UPDATE ... RETURNING` / `DELETE ... RETURNING` — D1 nie ma `SELECT FOR UPDATE`,
+ * `UPDATE ... RETURNING` / `DELETE ... RETURNING` - D1 nie ma `SELECT FOR UPDATE`,
  * którego używała wersja SQLAlchemy.
  */
 export async function nextTag(
@@ -195,7 +197,7 @@ export async function nextTag(
     )
     .first<{ last_number: number }>();
 
-  if (!counter) throw new Error('Brak wiersza asset_counter (id=1) — uruchom migracje D1.');
+  if (!counter) throw new Error('Brak wiersza asset_counter (id=1) - uruchom migracje D1.');
   return { number: counter.last_number, tag: formatTag(prefix, counter.last_number) };
 }
 
@@ -216,7 +218,7 @@ export async function deleteWithTagRelease(
   ]);
 }
 
-/** Prefiks tagów ze zmiennej środowiskowej; 2–4 wielkie litery, domyślnie „BS". */
+/** Prefiks tagów ze zmiennej środowiskowej; 2-4 wielkie litery, domyślnie „BS". */
 export function tagPrefix(env: { TAG_PREFIX?: string }): string {
   const raw = (env.TAG_PREFIX ?? '').trim().toUpperCase();
   return /^[A-Z]{2,4}$/.test(raw) ? raw : 'BS';
@@ -249,7 +251,7 @@ export function addHistory(
 
 /**
  * Ten sam status liczony w SQL (licencja pod aliasem `l`). Zapisany `status`
- * nie zmienia się sam, gdy mija data wygaśnięcia — bez tego licencja po
+ * nie zmienia się sam, gdy mija data wygaśnięcia - bez tego licencja po
  * terminie dalej widniałaby na listach i w filtrze jako „active".
  */
 export const LICENSE_STATUS_SQL = `CASE WHEN l.expiry_date < date('now') THEN '${LICENSE_STATUS.EXPIRED}' ELSE l.status END`;

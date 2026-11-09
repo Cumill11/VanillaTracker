@@ -1,5 +1,5 @@
 ---
-/** Usuwanie licencji — port tras `GET/POST /licenses/<pk>/delete/`. */
+/** Usuwanie licencji - port tras `GET/POST /licenses/<pk>/delete/`. */
 import ConfirmDelete from '../../../../components/ConfirmDelete.astro';
 import Base from '../../../../layouts/Base.astro';
 import { deleteWithTagRelease, type LicenseRow } from '../../../../lib/db';
@@ -27,7 +27,7 @@ if (Astro.request.method === 'POST') {
 
 <Base title={t.btn_delete} pageTitle={t.delete_title}>
   <ConfirmDelete
-    objectName={`${license.asset_tag} — ${license.name}`}
+    objectName={`${license.asset_tag} - ${license.name}`}
     cancelHref={`/licenses/${id}/`}
     action={`/licenses/${id}/delete/`}
   />

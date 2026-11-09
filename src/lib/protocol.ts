@@ -3,9 +3,9 @@
  *
  * Dokument do wydrukowania i podpisania przy wydaniu sprzętu pracownikowi.
  * W odróżnieniu od etykiet potrzebuje polskich znaków, a wbudowane czcionki
- * pdf-lib ich nie mają (kodowanie WinAnsi) — dlatego osadzamy okrojony wariant
- * Droid Sans (licencja Apache 2.0) z zestawem znaków łacińskich i polskich.
- * Plik powstał skryptem opisanym w README i waży ~28 kB.
+ * pdf-lib ich nie mają (kodowanie WinAnsi) - dlatego osadzamy okrojony wariant
+ * Droid Sans (licencja Apache 2.0) z zestawem znaków łacińskich i polskich
+ * (~28 kB, pochodzenie opisane w `src/assets/protocolFont.ts`).
  */
 import { PROTOCOL_FONT_BASE64 } from '../assets/protocolFont';
 import fontkit from '@pdf-lib/fontkit';
@@ -65,7 +65,7 @@ export async function generateProtocolPdf(
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
-  pdf.setTitle(`${t.protocol_title} — ${person.name}`);
+  pdf.setTitle(`${t.protocol_title} - ${person.name}`);
   pdf.setAuthor('VanillaTracker');
 
   const fontBytes = decodeFont(PROTOCOL_FONT_BASE64);
@@ -144,7 +144,7 @@ export async function generateProtocolPdf(
       write(String(index + 1) + '.', colNoX, 10);
       write(asset.asset_tag, colTagX, 10);
       write(fit(font, asset.name, 10, nameWidth), colNameX, 10);
-      write(fit(font, asset.serial_number || '—', 10, COL_SERIAL), colSerialX, 10);
+      write(fit(font, asset.serial_number || '-', 10, COL_SERIAL), colSerialX, 10);
       y -= 3 * MM;
       page.drawLine({
         start: { x: MARGIN, y },

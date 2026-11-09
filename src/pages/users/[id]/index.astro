@@ -1,5 +1,5 @@
 ---
-/** Szczegóły osoby — port `user_detail.html` (bez pola login i zmiany hasła). */
+/** Szczegóły osoby - port `user_detail.html` (bez pola login i zmiany hasła). */
 import HistoryTimeline from '../../../components/HistoryTimeline.astro';
 import StatusChip from '../../../components/StatusChip.astro';
 import Field from '../../../components/Field.astro';
@@ -54,10 +54,11 @@ const [userResult, assetsResult, licensesResult, historyResult] = await db.batch
     .bind(id),
   db
     .prepare(
-      `SELECT h.*, a.asset_tag AS asset_tag, NULL AS license_tag,
+      `SELECT h.*, a.asset_tag AS asset_tag, l.asset_tag AS license_tag,
               NULL AS user_first_name, NULL AS user_last_name
          FROM asset_history h
-         LEFT JOIN assets a ON a.id = h.asset_id
+         LEFT JOIN assets a   ON a.id = h.asset_id
+         LEFT JOIN licenses l ON l.id = h.license_id
         WHERE h.user_id = ?
         ORDER BY h.created_at DESC, h.id DESC
         LIMIT 20`,
@@ -172,7 +173,7 @@ const rowStyle =
           <h2>{t.lbl_history}</h2>
         </div>
         <div class="card-body">
-          <HistoryTimeline items={history} showAsset />
+          <HistoryTimeline items={history} showAsset showLicense />
         </div>
       </div>
     </div>

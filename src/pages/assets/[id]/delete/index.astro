@@ -1,5 +1,5 @@
 ---
-/** Usuwanie sprzętu — port tras `GET/POST /assets/<pk>/delete/`. */
+/** Usuwanie sprzętu - port tras `GET/POST /assets/<pk>/delete/`. */
 import ConfirmDelete from '../../../../components/ConfirmDelete.astro';
 import Base from '../../../../layouts/Base.astro';
 import { assetName, deleteWithTagRelease, type AssetRow } from '../../../../lib/db';
@@ -27,7 +27,7 @@ if (Astro.request.method === 'POST') {
 
 <Base title={t.btn_delete} pageTitle={t.delete_title}>
   <ConfirmDelete
-    objectName={`${asset.asset_tag} — ${assetName(asset)}`}
+    objectName={`${asset.asset_tag} - ${assetName(asset)}`}
     cancelHref={`/assets/${id}/`}
     action={`/assets/${id}/delete/`}
   />

@@ -1,4 +1,4 @@
-/** Parsowanie i walidacja danych z formularzy — port pomocników z `app.py`. */
+/** Parsowanie i walidacja danych z formularzy - port pomocników z `app.py`. */
 
 export type Errors = Record<string, string[]>;
 
@@ -53,7 +53,7 @@ export function parseSeats(value: string): number {
   return n !== null && n > 0 ? n : 1;
 }
 
-/** Wzorzec do LIKE — escapujemy `%`, `_` i `\` (klauzula ESCAPE '\'). */
+/** Wzorzec do LIKE - escapujemy `%`, `_` i `\` (klauzula ESCAPE '\'). */
 export function likePattern(query: string): string {
   return `%${query.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
 }

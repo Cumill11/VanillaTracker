@@ -1,7 +1,7 @@
 /*
  * Globalny arkusz aplikacji (Material Design 3, ciemny motyw).
  *
- * Wspólny dla layoutu `Base.astro` i strony logowania — kolory, promienie
+ * Wspólny dla layoutu `Base.astro` i strony logowania - kolory, promienie
  * i komponenty definiujemy raz, żeby obie strony nie rozjeżdżały się przy
  * zmianie motywu. Strona błędu (`src/lib/errorPage.ts`) ma własny, minimalny
  * arkusz w treści dokumentu: bywa zwracana z middleware i musi wyświetlić się
@@ -999,7 +999,7 @@ select.md3-select option {
   }
 }
 @media (max-width: 640px) {
-  /* Palec potrzebuje większego celu niż kursor — powiększamy obszar
+  /* Palec potrzebuje większego celu niż kursor - powiększamy obszar
      dotknięcia odznak i okruszków, nie zmieniając ich wyglądu. */
   a.asset-tag {
     display: inline-flex;

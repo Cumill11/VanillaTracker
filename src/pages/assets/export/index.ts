@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { ASSET_FROM, assetFilters } from '../../../lib/assetQuery';
 import { assetName, fullName, type AssetRow } from '../../../lib/db';
+import { formatDate } from '../../../lib/format';
 import { tk } from '../../../lib/i18n';
 
 type ExportRow = AssetRow & {
@@ -11,19 +12,15 @@ type ExportRow = AssetRow & {
   department_name: string | null;
 };
 
-/** W arkuszu pusta komórka czyta się lepiej niż półpauza z widoku HTML. */
-const date = (value: string | null | undefined) => {
-  if (!value) return '';
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
-  return m ? `${m[3]}.${m[2]}.${m[1]}` : value;
-};
+/** W arkuszu pusta komórka czyta się lepiej niż kreska z widoku HTML. */
+const date = (value: string | null | undefined) => (value ? formatDate(value) : '');
 
-/** Pole CSV: cudzysłowy podwajamy, całość cytujemy — Excel nie lubi niespodzianek. */
+/** Pole CSV: cudzysłowy podwajamy, całość cytujemy - Excel nie lubi niespodzianek. */
 const cell = (value: string | number | null | undefined) =>
   `"${String(value ?? '').replace(/"/g, '""')}"`;
 
 /**
- * Eksport listy sprzętu do CSV — z tymi samymi filtrami, co widok listy.
+ * Eksport listy sprzętu do CSV - z tymi samymi filtrami, co widok listy.
  *
  * Separatorem jest średnik, a plik zaczyna się znacznikiem BOM: tak polski
  * Excel otwiera plik od razu w kolumnach i z poprawnymi ogonkami.
@@ -98,7 +95,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
 
   const filename = `sprzet-${new Date().toISOString().slice(0, 10)}.csv`;
 
-  return new Response('﻿' + lines.join('\r\n'), {
+  return new Response('\uFEFF' + lines.join('\r\n'), {
     headers: {
       'content-type': 'text/csv; charset=utf-8',
       'content-disposition': `attachment; filename="${filename}"`,

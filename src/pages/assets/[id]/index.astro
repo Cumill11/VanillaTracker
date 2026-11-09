@@ -1,5 +1,5 @@
 ---
-/** Szczegóły sprzętu — port `asset_detail.html`. */
+/** Szczegóły sprzętu - port `asset_detail.html`. */
 import HistoryTimeline from '../../../components/HistoryTimeline.astro';
 import StatusChip from '../../../components/StatusChip.astro';
 import Field from '../../../components/Field.astro';
@@ -136,7 +136,7 @@ const showStatusCard = (
                     {tk(t, `cat_${asset.category_slug}`, asset.category_name ?? '')}
                   </>
                 ) : (
-                  '—'
+                  '-'
                 )
               }
             </Field>
@@ -299,10 +299,7 @@ const showStatusCard = (
           <form method="post" action={`/assets/${id}/assign-dept/`}>
             <input type="hidden" name="csrf_token" value={session.csrfToken} />
             <div class="form-group mb-16">
-              <label class="sr-only" for="dept-select" style="display:none">
-                {t.asset_dept_title}
-              </label>
-              <select id="dept-select" name="department_id" class="md3-select">
+              <select name="department_id" class="md3-select" aria-label={t.asset_dept_title}>
                 <option value="">{t.lbl_none}</option>
                 {
                   departments.map((dept) => (

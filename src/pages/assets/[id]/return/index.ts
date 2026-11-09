@@ -3,7 +3,7 @@ import { ASSET_STATUS, HISTORY_ACTION, addHistory, nowIso, type AssetRow } from 
 import { field, parseId } from '../../../../lib/forms';
 import { fmt } from '../../../../lib/i18n';
 
-/** Zwrot sprzętu — port `POST /assets/<pk>/return/`. */
+/** Zwrot sprzętu - port `POST /assets/<pk>/return/`. */
 export const POST: APIRoute = async ({ params, locals, redirect }) => {
   const { t, session, db } = locals;
 

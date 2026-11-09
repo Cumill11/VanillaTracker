@@ -1,12 +1,12 @@
 /**
- * Etykiety PDF 35×25 mm — port `label_pdf.py` (reportlab + qrcode) na pdf-lib.
+ * Etykiety PDF 35×25 mm - port `label_pdf.py` (reportlab + qrcode) na pdf-lib.
  *
  * Układ bez zmian: [ kod QR 20×20 mm ] | separator | [ tag obrócony o +90° ].
- * QR rysujemy wektorowo (prostokąty), a nie jako PNG — mniejszy plik i ostry
+ * QR rysujemy wektorowo (prostokąty), a nie jako PNG - mniejszy plik i ostry
  * wydruk w każdej rozdzielczości.
  */
 import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
-// Sam koder QR, bez rendererów canvas/SVG — te sięgają po DOM, którego
+// Sam koder QR, bez rendererów canvas/SVG - te sięgają po DOM, którego
 // w Workers nie ma.
 import QR from 'qrcode/lib/core/qrcode.js';
 
@@ -31,7 +31,7 @@ function qrMatrix(text: string): { size: number; data: Uint8Array } {
 }
 
 /**
- * Dobiera największy rozmiar czcionki mieszczący tag w pasku po prawej —
+ * Dobiera największy rozmiar czcionki mieszczący tag w pasku po prawej -
  * odpowiednik `_max_font_size`. `maxLen` ogranicza długość napisu (wzdłuż
  * wysokości strony), `maxAsc` jego wysokość (wzdłuż szerokości paska).
  */
@@ -55,7 +55,7 @@ function drawQr(page: PDFPage, text: string): void {
   const total = size + QR_BORDER_MODULES * 2;
   const cell = QR_SIZE / total;
 
-  // Biała podkładka — quiet zone musi być jasna, żeby czytnik złapał kod.
+  // Biała podkładka - quiet zone musi być jasna, żeby czytnik złapał kod.
   page.drawRectangle({
     x: QR_X,
     y: QR_Y,
@@ -67,7 +67,7 @@ function drawQr(page: PDFPage, text: string): void {
   const black = rgb(0, 0, 0);
   for (let row = 0; row < size; row++) {
     let runStart = -1;
-    // Ciągi sąsiadujących modułów rysujemy jednym prostokątem — bez tego
+    // Ciągi sąsiadujących modułów rysujemy jednym prostokątem - bez tego
     // między nimi potrafią prześwitywać włosowe szczeliny.
     for (let col = 0; col <= size; col++) {
       const dark = col < size && data[row * size + col] === 1;
@@ -118,7 +118,7 @@ export async function generateLabelsPdf(
   baseUrl: string,
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
-  pdf.setTitle('VanillaTracker — Etykiety');
+  pdf.setTitle('VanillaTracker - Etykiety');
   pdf.setAuthor('VanillaTracker');
 
   const font = await pdf.embedFont(StandardFonts.HelveticaBold);

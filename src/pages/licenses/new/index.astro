@@ -1,12 +1,13 @@
 ---
-/** Dodawanie licencji — port tras `GET/POST /licenses/new/`. */
+/** Dodawanie licencji - port tras `GET/POST /licenses/new/`. */
 import LicenseForm from '../../../components/LicenseForm.astro';
 import Base from '../../../layouts/Base.astro';
-import { nextTag, nowIso, tagPrefix } from '../../../lib/db';
+import { HISTORY_ACTION, addHistory, nextTag, nowIso, tagPrefix } from '../../../lib/db';
 import { licenseForm, type LicenseFormData } from '../../../lib/entities';
 import { env } from '../../../lib/env';
 import type { Errors } from '../../../lib/forms';
 import { fmt } from '../../../lib/i18n';
+import { NOTES } from '../../../lib/notes';
 import { insertRow } from '../../../lib/sql';
 
 const { t, session, db } = Astro.locals;
@@ -31,6 +32,11 @@ if (Astro.request.method === 'POST') {
     });
 
     if (createdId !== null) {
+      await addHistory(db, {
+        license_id: createdId,
+        action: HISTORY_ACTION.NOTE,
+        note: NOTES.LICENSE_CREATED,
+      }).run();
       session.addMessage(fmt(t.msg_license_added, { tag }));
       return Astro.redirect(`/licenses/${createdId}/`);
     }

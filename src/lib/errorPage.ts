@@ -1,7 +1,7 @@
 /**
  * Samodzielna strona błędu (403/404/500).
  *
- * Nie korzysta z layoutu ani z bazy, bo bywa zwracana z middleware — zanim
+ * Nie korzysta z layoutu ani z bazy, bo bywa zwracana z middleware - zanim
  * cokolwiek zdąży się wyrenderować. Odpowiada `error.html` z wersji Flask.
  */
 import { translations as t, tk } from './i18n';
@@ -23,7 +23,7 @@ export function renderErrorPage(status: number): Response {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${status} — ${escapeHtml(title)}</title>
+<title>${status} - ${escapeHtml(title)}</title>
 <link rel="icon" type="image/svg+xml" href="/img/logo.svg">
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>

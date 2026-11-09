@@ -1,10 +1,10 @@
--- VanillaTracker — schemat początkowy dla Cloudflare D1.
+-- VanillaTracker - schemat początkowy dla Cloudflare D1.
 --
 -- Różnice względem wersji Flask/SQLAlchemy:
 --   * brak kolumn logowania w `users` (password_hash, is_superuser, last_login)
---     — logować może się wyłącznie administrator, konfigurowany przez sekrety Workera;
+--     - osoby są wyłącznie odbiorcami sprzętu i licencji;
 --   * `user_profiles` scalone z `users` (department_id, phone, position);
---   * brak tabeli `settings` — prefiks tagów pochodzi ze zmiennej TAG_PREFIX;
+--   * brak tabeli `settings` - prefiks tagów pochodzi ze zmiennej TAG_PREFIX;
 --   * daty i znaczniki czasu trzymane jako TEXT w ISO-8601 (porównywalne leksykalnie),
 --     kwoty jako TEXT (dokładność dziesiętna, odpowiednik NUMERIC(10,2)).
 
@@ -110,7 +110,7 @@ CREATE TABLE asset_counter (
   last_number INTEGER NOT NULL DEFAULT 0
 );
 
--- Numery zwolnione przez usunięty sprzęt/licencje — używane ponownie przed
+-- Numery zwolnione przez usunięty sprzęt/licencje - używane ponownie przed
 -- zwiększeniem licznika.
 CREATE TABLE tag_pool (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
